@@ -2,7 +2,43 @@
 
 ## 1. Launch EC2 Instances
    - Launch control plane and worker nodes in the same VPC/subnet.
-   - Assign security groups with correct inbound rules (see [control-plane](ec2-control-plane-node.sh) and [worker](ec2-worker-node.sh)).
+   - Assign security groups with correct inbound rules:
+      ## Control Plane Nodes
+      | Rule Type | Protocol | Port | Source/Destination (Example) | Purpose |
+      |-----------|----------|------|-----------------------------|---------|
+      | **Inbound** | TCP | 6443 | Worker Nodes' Security Group (`sg-yyyyyyyy`) | Kubernetes API |
+      | **Inbound** | TCP | 4240 | Worker Nodes' Security Group (`sg-yyyyyyyy`) | Cilium Health Check |
+      | **Inbound** | UDP | 8472 | Worker Nodes' Security Group (`sg-yyyyyyyy`) | VXLAN Overlay (Cilium) |
+      | **Inbound** | TCP | 4244 | Worker Nodes' Security Group (`sg-yyyyyyyy`) | Hubble Observability (Optional) |
+      | **Inbound** | TCP | 53 | VPC CIDR Block (`10.0.0.0/16`) | DNS Resolution |
+      | **Inbound** | UDP | 53 | VPC CIDR Block (`10.0.0.0/16`) | DNS Resolution |
+      | **Inbound** | TCP | 22 | Admins' IP Range (`203.0.113.10/32`) | SSH Access |
+      | **Inbound** | UDP | 123 | Public NTP Servers (`129.6.15.30/32`) | Network Time Protocol |
+      | **Inbound** | TCP | 80 | Public Internet (`0.0.0.0/0`) | HTTP (if needed) |
+      | **Inbound** | TCP | 443 | Public Internet (`0.0.0.0/0`) | HTTPS (if needed) |
+      | **Outbound** | All | Any | `0.0.0.0/0` | Allow all outgoing traffic |
+      
+      ## Worker Nodes
+      | Rule Type | Protocol | Port | Source/Destination (Example) | Purpose |
+      |-----------|----------|------|-----------------------------|---------|
+      | **Inbound** | TCP | 4240 | Control Plane Nodes' Security Group (`sg-xxxxxxxx`) | Cilium Health Check |
+      | **Inbound** | UDP | 8472 | Control Plane Nodes' Security Group (`sg-xxxxxxxx`) | VXLAN Overlay (Cilium) |
+      | **Inbound** | TCP | 4244 | Control Plane Nodes' Security Group (`sg-xxxxxxxx`) | Hubble Observability (Optional) |
+      | **Inbound** | TCP | 53 | VPC CIDR Block (`10.0.0.0/16`) | DNS Resolution |
+      | **Inbound** | UDP | 53 | VPC CIDR Block (`10.0.0.0/16`) | DNS Resolution |
+      | **Inbound** | TCP | 22 | Admins' IP Range (`203.0.113.10/32`) | SSH Access |
+      | **Inbound** | UDP | 123 | Public NTP Servers (`129.6.15.30/32`) | Network Time Protocol |
+      | **Inbound** | TCP | 80 | Public Internet (`0.0.0.0/0`) | HTTP (if needed) |
+      | **Inbound** | TCP | 443 | Public Internet (`0.0.0.0/0`) | HTTPS (if needed) |
+      | **Outbound** | All | Any | `0.0.0.0/0` | Allow all outgoing traffic |
+      
+      # Notes:
+      - **Dropped ICMP (Ping)** for security but kept necessary rules for DNS, NTP, and VXLAN (Cilium).
+      - **Restricted NodePort exposure** (`30080/tcp` only) instead of `30000-32767/tcp`.
+      - **Kept VXLAN (`8472/udp`)** for Cilium overlay networking.
+      - **Ensured control plane and worker nodes communicate securely** via security groups.
+      
+      This **minimizes security risks** while **keeping Kubernetes fully functional**.
 
 ## 2. (Optional) Set Up Route53 for Custom Domain
    - If you already have a custom domain managed by another DNS provider, you can skip this step.

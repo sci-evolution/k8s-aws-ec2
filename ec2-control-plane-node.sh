@@ -16,21 +16,17 @@ cloud-init status --wait || true
 ufw default deny incoming
 ufw default allow outgoing
 ufw default deny routed
-ufw allow 6443/tcp         # Kubernetes API
-ufw allow 4240/tcp         # Cilium health
-ufw allow 8472/udp         # VXLAN (if overlay)
-ufw allow 30000:32767/tcp  # NodePort
-ufw allow 30000:32767/udp  # NodePort
-ufw allow 4244/tcp         # Hubble (optional)
-ufw allow 2379/tcp         # etcd (if external)
-ufw allow 2379/udp         # etcd (if external)
-ufw allow 53/tcp           # DNS
-ufw allow 53/udp           # DNS
-ufw allow 22/tcp           # SSH
-ufw allow 123/udp          # NTP
-ufw allow 80/tcp           # HTTP (if needed)
-ufw allow 443/tcp          # HTTPS (if needed)
-ufw allow proto icmp       # ICMP
+ufw allow 6443/tcp                    # Kubernetes API
+ufw allow 4240/tcp                    # Cilium health
+ufw allow 8472/udp                    # VXLAN (if overlay)
+ufw allow 4244/tcp                    # Hubble (optional)
+ufw allow 53/tcp                      # DNS
+ufw allow 53/udp                      # DNS
+ufw allow 22/tcp                      # SSH
+ufw allow 123/udp                     # NTP
+ufw allow 80/tcp                      # HTTP (if needed)
+ufw allow 443/tcp                     # HTTPS (if needed)
+ufw allow 30080/tcp                   # NodePort
 ufw --force enable
 
 # 2. Disable swap (required by Kubernetes)
