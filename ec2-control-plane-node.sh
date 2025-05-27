@@ -73,8 +73,13 @@ apt-mark hold kubelet kubeadm kubectl
 systemctl enable --now kubelet
 
 # 7. Initialize the Kubernetes control plane
-# If using a load balancer, add: --control-plane-endpoint <NLB-DNS-or-IP>:6443
-kubeadm init
+kubeadm init \
+  --apiserver-advertise-address=<CONTROL_PLANE_PRIVATE_IP> \
+  --control-plane-endpoint=<NLB_DNS_NAME>:6443 \
+  --pod-network-cidr=192.168.0.0/16 \
+  --kubernetes-version=v1.32 \
+  --upload-certs \
+  --skip-phases=addon/kube-proxy # This is important for Cilium's kube-proxy replacement
 
 # 8. Set up kubectl for the default user (ubuntu)
 export HOME_DIR="/home/ubuntu"
@@ -83,7 +88,25 @@ cp -i /etc/kubernetes/admin.conf $HOME_DIR/.kube/config
 chown ubuntu:ubuntu $HOME_DIR/.kube/config
 
 # 9. Install Cilium (network add-on)
-su - ubuntu -c "kubectl create -f https://raw.githubusercontent.com/cilium/cilium/v1.17.0/install/kubernetes/quick-install.yaml"
+# Install Cilium CLI
+CILIUM_CLI_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/cilium-cli/main/stable.txt)
+CLI_ARCH=amd64
+curl -L --fail --remote-name-all https://github.com/cilium/cilium-cli/releases/download/${CILIUM_CLI_VERSION}/cilium-linux-${CLI_ARCH}.tar.gz{,.sha256sum}
+sha256sum --check cilium-linux-${CLI_ARCH}.tar.gz.sha256sum
+sudo tar xzvfC cilium-linux-${CLI_ARCH}.tar.gz /usr/local/bin
+rm cilium-linux-${CLI_ARCH}.tar.gz{,.sha256sum}
+
+# Install Cilium CNI
+cilium install \
+  --version ${CILIUM_CLI_VERSION} \
+  --kube-proxy-replacement=strict \
+  --cluster-pool-ipv4-cidr=192.168.0.0/16 \
+  --enable-endpoint-health-checking=true \
+  --enable-hubble=true \
+  --hubble-relay=true \
+  --hubble-ui=true \
+  --azure=false \
+  --eni=false
 
 # 10. Print join command for worker nodes
 echo "Run the kubeadm join command below on each worker node:"
