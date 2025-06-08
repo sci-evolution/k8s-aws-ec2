@@ -1,0 +1,18 @@
+<nav id="sidenav">
+  <div id="sidenav_header">
+    <div id="profile">
+      <img src="{# static 'users/images/profile.png' #}" alt="img_profile" />
+    </div>
+    <div id="close_sidenav">
+      <button class="btn_close_sidenav" onclick="onOpenCloseSidenav(event)">
+        <span class="icon_cancel">&#x2718</span>
+      </button>
+    </div>
+  </div>
+  <ul>
+    <li><a href="{% url 'users:index' %}">Users <span id="icon_users">&#x1f5d2</span></a></li> {# temp #}
+    <li><a href="#">Link_1</a></li> {# temp #}
+    <li><a href="#">Link_1</a></li> {# temp #}
+    <li><a href="#">Link_1</a></li> {# temp #}
+  </ul>
+</nav>

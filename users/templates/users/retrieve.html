@@ -1,0 +1,92 @@
+{% extends 'users/base_users.html' %}
+
+{% block content %}
+<form
+  id="form_update"
+  action="{% url 'users:update' user.user_id %}"
+  onsubmit="onCreateOrUpdate(event)"
+>
+  {% csrf_token %}
+  <label for="name">Name</label>
+  <input
+    id="name"
+    name="name"
+    placeholder="Your Name"
+    value="{{ user.name }}"
+    minlength=3
+    maxlength=50
+    pattern="^[a-zA-Z0-9][a-zA-Z0-9_.\-\s]{1,48}[a-zA-Z0-9]$"
+    title="Enter the user's name"
+    required
+  />
+  <label for="gender">Gender</label>
+  <select
+    id="gender"
+    name="gender"
+    title="Choose the user's gender"
+    value="{{ user.gender }}"
+  >
+  {% for k in user.gender_choices %}
+    <option
+      value="{{ k }}"
+      {% if k == user.gender %}selected{% endif %}
+    >{{ k }}</option>
+  {% endfor %}
+  </select>
+  <label for="age">Age</label>
+  <input
+    type="number"
+    id="age"
+    name="age"
+    value="{{ user.age }}"
+    min=18
+    max=100
+    title="Enter the user's age"
+    required
+  />
+  <label for="joined_at">Joined</label>
+  <input
+    type="datetime-local"
+    id="joined_at"
+    name="joined_at"
+    value="{{ user.joined_at }}"
+    title="Enter the user's join date"
+  />
+  <label for="is_active">Active</label>
+  <input
+    type="checkbox"
+    id="is_active"
+    name="is_active"
+    {% if user.is_active %}checked{% endif %}
+    title="Check it if the user is active"
+  />
+  <label for="obs">Obs</label>
+  <textarea
+    id="obs"
+    name="obs"
+    placeholder="Some observations"
+    maxlength=1000
+    title="Enter aditional observations about the user"
+  >{{ user.obs }}</textarea>
+  <button class="btn_confirm" title="Click to update the user">
+      Update <span class="icon_confirm">&#x2714</span>
+  </button>
+  <button
+    type="button"
+    class="btn_delete"
+    onclick="onOpenCloseModalDelete(event)"
+    title="Click to delete this user"
+  >
+    Delete <span class="icon_delete">&#x1f5d1</span>
+  </button>
+  <button
+    type="button"
+    class="btn_cancel"
+    onclick="window.open({% url 'users:index' %}, '_self')"
+    title="Click to return to the users list"
+  >
+    Cancel <span class="icon_cancel">&#x2718</span>
+  </button>
+</form>
+{% include 'users/delete.html' %}
+{% endblock content %}

@@ -1,0 +1,61 @@
+{% extends 'tasks/base_tasks.html' %}
+
+{% block content %}
+<form id="form_create" 
+      action="{% url 'tasks:create' %}"
+      method="post"
+>
+  {% csrf_token %}
+  <label for="title">Title</label>
+  <input id="title" name="title" placeholder="Do something" />
+  <label for="description">Description</label>
+  <textarea id="description"
+         name="description"
+	 placeholder="Write a description."
+  ></textarea>
+  <label for="start_time">Start time</label>
+  <input id="start_time"
+         name="start_time"
+	 type="datetime-local"
+  />
+  <label for="end_time">End time</label>
+  <input id="end_time"
+         name="end_time"
+	 type="datetime-local"
+  />
+  <label for="priority">Priority level</label>
+  <select id="priority" name="priority">
+    <option value="HIGH">High</option>
+    <option value="MEDIUM">Medium</option>
+    <option value="LOW" selected>Low</option>
+  </select>
+  <fieldset>
+  <legend>Status<legend>
+  <input id="todo_status"
+         name="status"
+	 type="radio"
+	 value="TODO"
+	 checked
+  />
+  <label for="todo_status">Todo</label>
+  <input id="doing_status"
+         name="status"
+	 type="radio"
+	 value="DOING"
+  />
+  <label for="doing_status">Doing</label>
+  <input id="done_status"
+         name="status"
+	 type="radio"
+	 value="DONE"
+  />
+  <label for="done_status">Done</label>
+  </fieldset>
+  <button class="btn_confirm">
+    Create <span class="icon_confirm">&#x2714</span>
+  </button>
+  <a class="btn_cancel" href="{% url 'tasks:index' %}">
+	  Cancel <span id="icon_cancel">&#x2718</span>
+  </a>
+</form>
+{% endblock content %}

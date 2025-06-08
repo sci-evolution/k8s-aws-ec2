@@ -1,0 +1,48 @@
+{% extends 'users/base_users.html' %}
+
+{% block content %}
+  <h1>Users</h1>
+  {% url 'users:new_user' as new_user %}
+  <button type="button" class="btn_add" onclick="window.open('{{new_user}}', '_self')">
+    Add user <span class="icon_add">&#x002b</span>
+  </button>
+  <form id="form_q" action="{% url 'users:search' %}" method="post">
+    {% csrf_token %}
+    <input
+      type="search"
+      id="q"
+      name="q"
+      minlength=3
+      maxlength=50
+      pattern="^[a-zA-Z0-9][a-zA-Z0-9_.\-\s]{1,48}[a-zA-Z0-9]$"
+      placeholder="Search for users ..."
+      title="Only letters, numbers, underscores, hyphens, dots and whitespaces. 3 - 50 characters."
+      aria-label="Search for users"
+      aria-describedby="q_descriptor"
+    >
+    <div id="q_descriptor" class="aria_descriptor">
+      Only letters, numbers, underscores, hyphens, dots and whitespaces. 3 - 50 characters.
+    </div>
+    <button class="btn_q"><span class="icon_q">&#x1f50d</span></button>
+  </form>
+  <div class="table">
+    <div class="thead">
+      <div class="tr">
+        <span class="th">Name</span>
+        <span class="th">Joined at</span>
+        <span class="th">Active</span>
+      </div>
+    </div>
+    <div class="tbody">
+      {% for user in users %}
+      <div class="tr">
+        <a href="{% url 'users:retrieve' user.user_id %}">
+          <span class="td">{{ user.name }}</span>
+          <span class="td">{{ user.joined_at|date:'d/m/Y' }}</span>
+          <span class="td">{{ user.is_active|yesno }}</span>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endblock content %}

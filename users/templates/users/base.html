@@ -1,0 +1,18 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{% block title %}Users{% endblock title %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'users/css/styles.css' %}">
+    <script src="{% static 'users/js/scripts.js' %}"></script>
+  </head>
+  <body>
+    {% include 'users/header.html' %}
+    {% include 'users/sidenav.html' %}
+    {% include 'users/searchbar.html' %}
+    {% block main %}{% endblock main %}
+    {% include 'users/footer.html' %}
+  </body>
+</html>

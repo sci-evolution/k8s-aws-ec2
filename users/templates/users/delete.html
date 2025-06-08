@@ -1,0 +1,23 @@
+<div class="modal_delete">
+  <form
+    id="form_delete_user"
+    action="{% url 'users:delete' user.user_id %}"
+    onsubmit="onDelete(event)"
+  >
+    {% csrf_token %}
+    <fieldset>
+      <h1>Confirm delete?</h1>
+      <p>This action can't be undone!</p>
+    </fieldset>
+    <button class="btn_delete">
+      Delete <span class="icon_delete">&#x1f5d1</span>
+    </button>
+    <button
+      type="button"
+      class="btn_cancel"
+      onclick="onOpenCloseModalDelete(event)"
+    >
+      Cancel <span class="btn_cancel">&#x2718</span>
+    </button>
+  </form>
+</div>

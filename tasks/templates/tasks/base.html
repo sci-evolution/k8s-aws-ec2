@@ -1,0 +1,68 @@
+{% load static %}
+
+<DOCTYPE html>
+<html>
+  <head>
+    <title>{% block title %}Tasks{% endblock title %}</title>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1"
+    />
+    <link rel="stylesheet"
+	  href="{% static 'tasks/css/style.css' %}"
+    />
+  </head>
+  <body>
+    {% block header %}
+    <header>
+      <div id="btn_menu">
+        <span id="icon_menu">&#x2630</span>
+      </div>
+      <div id="logo">
+        <img src="{% static 'tasks/images/logo.png' %}"
+             alt="Logo"
+        />
+      </div>
+      <div id="search">
+        <form id="form_search">
+	  {% csrf_token %}
+          <input type="search"
+	         id="q"
+                 name="q"
+        	 minlength="3"
+        	 maxlength="50"
+                 pattern="^[a-zA-Z0-9][a-zA-Z0-9_\-.\s]{1,48}[a-zA-Z0-9]$"
+        	 placeholder="Search through the site..."
+        	 aria-label="Search through the site..."
+        	 title="Only letters, numbers, underscores, hyphens, dots and whitespaces. 3 - 50 characters."
+          />
+          <button class="btn_search" onClick="onSearch(event)">
+            Search <span class="icon_search">&#x1f50d</span>
+          </button>
+	</form>
+      </div>
+      <div id="breadcrumbs">
+	<ul>
+	  <li>
+	    <a href="{% url 'tasks:index' %}">Home</a>
+	  </li>
+	</ul>
+      </div>
+    </header>
+    {% endblock header %}
+    {% block sidenav %}
+    <nav>
+      <ul>
+	<li>
+	  <a href="{% url 'tasks:index' %}">
+	    Tasks<span id="tasks_icon"> &#x1f5d2</span>
+	  </a>
+	</li>
+      </ul>
+    </nav>
+    {% endblock sidenav %}
+    {% block main %}
+    {% endblock main %}
+    <script src="{% static 'tasks/js/event_handlers.js' %}">
+    </script>
+  </body>
+</html>

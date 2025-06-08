@@ -1,0 +1,74 @@
+
+{% extends 'tasks/base_tasks.html' %}
+
+{% block content %}
+<form id="form_update_task"
+      action="{% url 'tasks:update' task.task_id %}"
+      method="post"
+>
+  {% csrf_token %}
+  <label for="title">Title</label>
+  <input id="title"
+         name="title"
+	 placeholder="Do something"
+	 value="{{ task.title }}"
+  />
+  <label for="description">Description</label>
+  <textarea id="description"
+         name="description"
+	 placeholder="Write a description."
+  >{{ task.description }}</textarea>
+  <label for="start_time">Start time</label>
+  <input id="start_time"
+         name="start_time"
+	 type="datetime-local"
+	 value="{{ task.start_time }}"
+  />
+  <label for="end_time">End time</label>
+  <input id="end_time"
+         name="end_time"
+	 type="datetime-local"
+	 value="{{ task.end_time }}"
+  />
+  <label for="priority">Priority level</label>
+  <select id="priority"
+	  name="priority"
+	  value="{{ task.priority }}"
+  >
+  {% for k in task.PRIORITY_CHOICES %}
+    <option value="{{ k }}"
+	    {% if k == task.priority %}
+            selected
+	    {% endif %}
+    >{{ k }}</option>
+  {% endfor %}
+  </select>
+  <fieldset>
+  <legend>Status<legend>
+  {% for k in task.STATUS_CHOICES %}
+  <label>
+    <input name="status"
+           type="radio"
+	   value="{{ k }}"
+	   {% if k == task.status %}
+	   checked
+	   {% endif %}
+    /> {{ k }}
+  </label>
+  {% endfor %}
+  </fieldset>
+  <button class="btn_confirm">
+    Update <span class="icon_confirm">&#x2714</span>
+  </button>
+  <button class="btn_delete"
+	  type="button"
+	  onClick="modalDelete(event)"
+  >
+    Delete <span class="icon_delete">&#x1f5d1</span>
+  </button>
+  <a class="btn_cancel" href="{% url 'tasks:index' %}">
+    Cancel <span class="icon_cancel">&#x2718</span>
+  </a>
+</form>
+{% include 'tasks/delete.html' %}
+{% endblock content %}

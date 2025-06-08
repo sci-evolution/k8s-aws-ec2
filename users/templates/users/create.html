@@ -1,0 +1,71 @@
+{% extends 'users/base_users.html' %}
+
+{% block content %}
+<form
+  id="form_create"
+  action="{% url 'users:create' %}"
+  onsubmit="onCreateOrUpdate(event)"
+>
+  {% csrf_token %}
+  <label for="name">Name</label>
+  <input
+    id="name"
+    name="name"
+    placeholder="Your name"
+    minlength=3
+    maxlength=50
+    pattern="^[a-zA-Z0-9][a-zA-Z0-9_.\-\s]{1,48}[a-zA-Z0-9]$"
+    title="Enter the user's name"
+    required
+  />
+  <label for="gender">Gender</label>
+  <select id="gender" name="gender" title="Choose the user's gender">
+    <option value="MALE">Male</option>
+    <option value="FEMALE">Female</option>
+    <option value="" selected></option>
+  </select>
+  <label for="age">Age</label>
+  <input
+    type="number"
+    id="age"
+    name="age"
+    min=18
+    max=100
+    title="Enter the user's age"
+    required
+  />
+  <label for="joined_at">Joined</label>
+  <input
+    type="datetime-local"
+    id="joined_at"
+    name="joined_at"
+    title="Enter the user's join date"
+  />
+  <label for="is_active">Active</label>
+  <input
+    type="checkbox"
+    id="is_active"
+    name="is_active"
+    title="Check if the user is active"
+  />
+  <label for="obs">Obs</label>
+  <textarea
+    id="obs"
+    name="obs"
+    placeholder="Some observations"
+    maxlength=1000
+    title="Enter aditional observations about the user"
+  ></textarea>
+  <button class="btn_confirm" title="Click to create the new user">
+    Create <span class="icon_confirm">&#x2714</span>
+  </button>
+  <button
+    type="button"
+    class="btn_cancel"
+    onclick="window.open({% url 'users:index' %}, '_self')"
+    title="Click to return to the users list"
+  >
+    Cancel <span class="icon_cancel">&#x2718</span>
+  </button>
+</form>
+{% endblock content %}

@@ -1,0 +1,20 @@
+<div id="searchbar">
+  <form id="form_searchbar" action="{% url 'users:search' %}" onsubmit="onSearch(event)">
+    <input
+      type="search"
+      id="search"
+      name="search"
+      minlength=3
+      maxlength=50
+      pattern="^[a-zA-Z0-9][a-zA-Z0-9_.\-\s]{1,48}[a-zA-Z0-9]$"
+      placeholder="Search"
+      title="Only letters, numbers, underscores, hyphens, dots and whitespaces. 3 - 50 characters."
+      aria-label="Search on this site"
+      aria-describedby="search_descriptor"
+    />
+    <div id="search_descriptor" class="aria_descriptor">
+      Only letters, numbers, underscores, hyphens, dots and whitespaces. 3 - 50 characters.
+    </div>
+    <button class="btn_search"><span class="icon_search">&#x1f50d</span></button>
+  </form>
+</div>

@@ -1,0 +1,57 @@
+body {
+  display: grid;
+  grid-template-columns: auto
+}
+
+header {
+  display: grid;
+  grid-template-columns: 30% 30% 30%;
+  align-content: center;
+  justify-content: space-between;
+  color: white;
+  background-color: blue
+}
+
+#btn_menu {
+  border: 1px solid yellow;
+}
+
+#logo {
+  border: 1px solid yellow;
+}
+
+#search {
+  border: 1px solid yellow;
+  align: end;
+  vertical-align: center
+}
+
+#breadcrumbs {
+  border: 1px solid yellow;
+  grid-column: 1 / span 3
+}
+
+nav {
+  color: black;
+  background-color: grey
+}
+
+main {
+
+}
+
+li {
+  list-style: none
+}
+
+a {
+  text-decoration: none
+}
+
+.modal-delete {
+  display: none
+}
+
+#q_tasks_description {
+  display: none
+}

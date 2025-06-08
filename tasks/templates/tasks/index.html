@@ -1,0 +1,53 @@
+{% extends 'tasks/base_tasks.html' %}
+
+{# It lists all tasks #}
+{% block content %}
+<h1>Tasks</h1>
+<a id="btn_add_task" href="{% url 'tasks:new_task' %}">
+  Add Task <span class="icon_add">&#x002b</span>
+</a>
+<form id="form_q_tasks"
+      action="{% url 'tasks:search_task' %}"
+      method="post"
+      role="search"
+>
+  {% csrf_token %}
+  <input type="search"
+	 id="q_tasks"
+         name="q"
+	 minlength="3"
+	 maxlength="50"
+       pattern="^[a-zA-Z0-9][a-zA-Z0-9_\-.\s]{1,48}[a-zA-Z0-9]$"
+	 placeholder="Search for tasks. e.g. Task 1"
+	 aria-label="Search for tasks. e.g. Task 1"
+	 aria-describedby="q_tasks_description"
+	 title="Only letters, numbers, underscores, hyphens, dots and whitespaces. 3 - 50 characters."
+  />
+  <span id="q_tasks_description">
+    Only letters, numbers, underscores, hyphens, dots and whitespaces are allowed. It must start and end with lettrr or number.
+  </span>
+  <button class="btn_search">
+    Search <span class="icon_search">&#x1f50d</span>
+  </button>
+</form>
+<div class="table_tasks">
+  <div class="thead">
+    <div class="tr">
+      <span class="th">Title</span>
+      <span class="th">Start time</span>
+      <span class="th">End time</span>
+    </div>
+  </div>
+  <div class="tbody">
+    {% for task in tasks %}
+    <div class="tr">
+      <a href="{% url 'tasks:retrieve' task.task_id %}">
+        <span class="td">{{ task.title }}</span>
+        <span class="td">{{ task.start_time }}</span>
+        <span class="td">{{ task.end_time }}</span>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock content %}

@@ -1,27 +1,29 @@
 # syntax=docker/dockerfile:1
 
-# Base image
-FROM python:3.12-slim AS base
+# Base Image
+ARG PYTHON_VERSION=3.12
+FROM python:${PYTHON_VERSION}-slim AS base
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 WORKDIR /app
-COPY requirements.txt ./
+COPY ./requirements.txt .
 
-# Development stage
+# Development Image
 FROM base AS development
-RUN pip install --upgrade pip && pip install -r requirements.txt
-COPY . .
-ENV DJANGO_SETTINGS_MODULE=webapp.settings
+WORKDIR /app
 EXPOSE 8000
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+RUN pip install --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
+COPY . .
+CMD [ "python3", "manage.py", "runserver", "0.0.0.0:8000" ]
 
-# Production stage
+# Production Image
 FROM base AS production
-RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
-COPY . .
-RUN python manage.py collectstatic --noinput
-# Create non-root user
-RUN adduser --disabled-password --gecos '' django
-USER django
+WORKDIR /app
 EXPOSE 8000
+RUN adduser --disabled-password --gecos '' django
+RUN pip install --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
+COPY . .
+USER django
 CMD ["gunicorn", "webapp.wsgi:application", "--bind", "0.0.0.0:8000"]
