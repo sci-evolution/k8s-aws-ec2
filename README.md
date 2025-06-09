@@ -1,10 +1,28 @@
-# AWS Setup Guide for Kubernetes Project (Draft)
+# Deploy K8s Cluster on AWS EC2
+
+## Description
+This use case demonstrates how to set up a Kubernetes cluster by using AWS EC2 instances and then deploying an webapp. It includes setting up AWS services and rescources, installing kubernetes related rescources, setting up control-plane and worker nodes then deploying the application and rescources.
+
+## Table of Contents
+- [Deploy K8s Cluster on AWS EC2](#deploy-k8s-cluster-on-aws-ec2)
+  - [Description](#description)
+  - [Table of Contents](#table-of-contents)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+    - [Steps](#steps)
+    - [Notes](#notes)
+      - [Control Plane Nodes](#control-plane-nodes)
+      - [Worker Nodes](#worker-nodes)
+  - [Usage](#usage)
+  - [Contributing](#contributing)
+  - [License](#license)
 
 ## Prerequisites:
 - Previous knowledge on AWS;
 - An IAM User with the required permissions;
 
-## Steps:
+## Installation
+### Steps:
 1. Create a "VPC and More" resources (Subnets, Route Tables, Internet Gateways, etc...);
 2. Create a Security Group for the Control Plane EC2 (attach it to the above VPC)(see notes below);
 3. Create a Security Group for the Worker EC2 (attach it to the above VPC)(see notes below);
@@ -24,7 +42,7 @@
     - Deploy your Django app using [django-app](k8s/django-app.yaml).
     - Ensure the Django Service is of type LoadBalancer so AWS provisions an ELB/NLB for external access.
 
-## Notes about Inbound and Outbound Rules for EC2 Security Groups:
+### Notes:
    ### Control Plane Nodes
    | Rule Type | Protocol | Port | Source/Destination (Example) | Purpose |
    |-----------|----------|------|-----------------------------|---------|
@@ -53,3 +71,12 @@
    | **Inbound** | TCP | 80 | Public Internet (`0.0.0.0/0`) | HTTP (if needed) |
    | **Inbound** | TCP | 443 | Public Internet (`0.0.0.0/0`) | HTTPS (if needed) |
    | **Outbound** | All | Any | `0.0.0.0/0` | Allow all outgoing traffic |
+
+## Usage
+After the deployment, you can access your application by navigating to `https://your_domain.com` in your web browser.
+
+## Contributing
+Guidelines for contributing can be found [here](CONTRIBUTING.md).
+
+## License
+[MIT Licence](LICENSE).
