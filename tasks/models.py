@@ -1,7 +1,7 @@
 import uuid
 from django.db import models, transaction
-from tasks.exceptions import NotFound
-from interfaces import IModelCustomGetById, IModelCustomUpdate, IModelCustomDelete
+from .exceptions import NotFound
+from .interfaces import IModelCustomGetById, IModelCustomUpdate, IModelCustomDelete
 
 
 class Task(models.Model, IModelCustomGetById, IModelCustomUpdate, IModelCustomDelete):

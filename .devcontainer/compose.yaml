@@ -5,53 +5,50 @@ services:
       dockerfile: Dockerfile
       target: development
     image: webapp-django:dev
-    container_name: webapp
+    container_name: ${WEBAPP_HOST}
     restart: unless-stopped
-    env_file:
-      - ../.env
     environment:
-      - DEBUG=${DEBUG}
-      - SECRET_KEY=${SECRET_KEY}
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
-      - DB_HOST=${POSTGRES_HOST}
-      - DB_PORT=${POSTGRES_PORT}
-      - DB_NAME=${POSTGRES_DB}
-      - DB_USER=${POSTGRES_USER}
-      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - DEBUG=${WEBAPP_DEBUG}
+      - SECRET_KEY=${WEBAPP_SECRET_KEY}
+      - ALLOWED_HOSTS=${WEBAPP_ALLOWED_HOSTS}
+      - DB_HOST=${WEBAPP_DB_HOST}
+      - DB_PORT=${WEBAPP_DB_PORT}
+      - DB_NAME=${WEBAPP_DB_NAME}
+      - DB_USER=${WEBAPP_DB_USER}
+      - DB_PASSWORD=${WEBAPP_DB_PASS}
     ports:
-      - 8000:8000
+      - ${WEBAPP_PORT}:${WEBAPP_PORT}
     volumes:
-      - ../:/app/
+      - ..:/app/:delegated
     depends_on:
-      - db
+      webapp-db:
+        condition: service_healthy
     networks:
-      - app-network
+      - webapp-network
 
-  db:
+  webapp-db:
     image: postgres:latest
-    container_name: db
+    container_name: ${WEBAPP_DB_HOST}
     restart: unless-stopped
-    env_file:
-      - ../.env
-    environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-    ports:
-      - 5432:5432
     volumes:
-      - db-data:/var/lib/postgresql/data
+      - webapp-db-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${WEBAPP_DB_USER}
+      POSTGRES_PASSWORD: ${WEBAPP_DB_PASS}
+      POSTGRES_DB: ${WEBAPP_DB_NAME}
+    ports:
+      - ${WEBAPP_DB_PORT}:${WEBAPP_DB_PORT}
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB}"]
+      test: ["CMD", "pg_isready", "-U", "${WEBAPP_DB_USER}", "-d", "${WEBAPP_DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - app-network
+      - webapp-network
 
 networks:
-  app-network:
+  webapp-network:
     driver: bridge
 
 volumes:
-  db-data:
+  webapp-db-data:

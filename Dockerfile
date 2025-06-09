@@ -6,7 +6,7 @@ FROM python:${PYTHON_VERSION}-slim AS base
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 WORKDIR /app
-COPY ./requirements.txt .
+COPY ./requirements.txt ./
 
 # Development Image
 FROM base AS development
@@ -21,9 +21,10 @@ CMD [ "python3", "manage.py", "runserver", "0.0.0.0:8000" ]
 FROM base AS production
 WORKDIR /app
 EXPOSE 8000
-RUN adduser --disabled-password --gecos '' django
+RUN adduser --disabled-password --gecos '' django \
+    && chown -R django:django /app
 RUN pip install --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 COPY . .
 USER django
-CMD ["gunicorn", "webapp.wsgi:application", "--bind", "0.0.0.0:8000"]
+CMD ["gunicorn", "todo.wsgi:application", "--bind", "0.0.0.0:8000"]
