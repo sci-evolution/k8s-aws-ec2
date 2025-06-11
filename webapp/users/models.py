@@ -1,6 +1,5 @@
 import uuid
 from django.db import models, transaction
-from .exceptions import NotFound
 
 
 class User(models.Model):
@@ -33,48 +32,3 @@ class User(models.Model):
             "obs": self.obs
         }
         return str(user)
-    
-    def get_by_id(self):
-        """
-        Get an User by its id
-        """
-
-        try:
-            self = User.objects.get(pk=self.user_id)
-            return self
-        except User.DoesNotExist as err:
-            raise NotFound(err)
-    
-    def custom_update(self) -> bool:
-        """
-        It performs the update inside a transaction
-        """
-
-        updated = False
-
-        try:
-            with transaction.atomic():
-                if(User.objects.get(pk=self.user_id)):
-                    self._state.adding = False
-                    self.save()
-                    updated = True
-        except User.DoesNotExist as err:
-            raise NotFound(err)
-        return updated
-    
-    def custom_delete(self) -> bool:
-        """
-        It performs a delete inside a transaction
-        """
-
-        deleted = False
-
-        try:
-            with transaction.atomic():
-                if(User.objects.get(pk=self.user_id)):
-                    self._state.adding = False
-                    self.delete()
-                    deleted = True
-        except User.DoesNotExist as err:
-            raise NotFound(err)
-        return deleted
