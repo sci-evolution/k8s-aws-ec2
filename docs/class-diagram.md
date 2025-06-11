@@ -101,6 +101,7 @@ classDiagram
         +str priority
         +str status
         +__str__(): str
+        +datetimetoiso(dt: datetime): str
         +custom_get_all(): list
         +custom_get_by_params(): list
         +custom_get_by_id(): object
@@ -117,6 +118,8 @@ classDiagram
         +delete(model: IModelCustomDelete): bool
     }
     class TaskView {
+        +json_decode(json: str): dict
+        +isotodatetime(iso: str): datetime
         +get_all(request, service: IServiceGetAll): HttpResponse
         +get_by_params(request, service: IServiceGetByParams): HttpResponse
         +get_by_id(request, id: str, service: IServiceGetById): HttpResponse
@@ -124,13 +127,9 @@ classDiagram
         +update(request, id: str, service: IServiceUpdate): HttpResponseRedirect
         +delete(request, id: str, service: IServiceDelete): HttpResponseRedirect
     }
-    class TaskHelpers {
-        +datetimetoiso(dt: datetime): str
-        +isotodatetime(iso: str): datetime
-        +json_decode(json: str): dict
-    }
 
     %% Implementations
+    Task ..|> IHelperDatetimeToIso
     Task ..|> IModelCustomGetAll
     Task ..|> IModelCustomGetByParams
     Task ..|> IModelCustomGetById
@@ -143,13 +142,12 @@ classDiagram
     TaskService ..|> IServiceCreate
     TaskService ..|> IServiceUpdate
     TaskService ..|> IServiceDelete
+    TaskView ..|> IHelperIsoToDatetime
+    TaskView ..|> IHelperJSONDecode
     TaskView ..|> IViewGetAll
     TaskView ..|> IViewGetByParams
     TaskView ..|> IViewGetById
     TaskView ..|> IViewCreate
     TaskView ..|> IViewUpdate
     TaskView ..|> IViewDelete
-    TaskHelpers ..|> IHelperDatetimeToIso
-    TaskHelpers ..|> IHelperIsoToDatetime
-    TaskHelpers ..|> IHelperJSONDecode
 ```
