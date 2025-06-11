@@ -4,6 +4,7 @@ from typing import Any, Dict
 from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, Http404
 from django.template import loader
 from django.urls import reverse
+from .models import Task
 from .exceptions import NotFound
 from .interfaces import (
     IServiceGetAll,
@@ -20,7 +21,17 @@ from .interfaces import (
     IViewDelete
 )
 
-class TaskView():
+
+TASK_MODEL = Task() # Provisory model instance for type hinting and dependency injection
+
+class TaskView(
+    IViewGetAll,
+    IViewGetByParams,
+    IViewGetById,
+    IViewCreate,
+    IViewUpdate,
+    IViewDelete
+):
     title: str = "Tasks"
 
     def isotodatetime(self, iso: str) -> datetime:
@@ -48,12 +59,12 @@ class TaskView():
             print(err)
             raise
     
-    def get_all(self, request: HttpRequest) -> HttpResponse:
+    def get_all(self, request: HttpRequest, service: IServiceGetAll) -> HttpResponse:
         try:
-            tasks = TaskService().get_all()
+            tasks = service.get_all(TASK_MODEL)
             template = loader.get_template("tasks/index.html")
             context = {
-                "title": title,
+                "title": self.title,
                 "tasks": tasks
             }
             return HttpResponse(template.render(context, request))
@@ -61,18 +72,18 @@ class TaskView():
             print(err)
             raise
     
-    def get_by_params(self, request: HttpRequest):
+    def get_by_params(self, request: HttpRequest, service: IServiceGetByParams) -> HttpResponse:
         try:
             params = request.GET.get("search")
             pattern = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_\-.\s]{1,48}[a-zA-Z0-9]$")
             
             if(not pattern.match(params)):
                 return HttpResponseBadRequest("Invalid search")
-            
-            tasks = TaskService().get_by_params(params)
+
+            tasks = service.get_by_params(TASK_MODEL, params)
             template = loader.get_template("tasks/index.html")
             context = {
-                "title": title,
+                "title": self.title,
                 "tasks": tasks
             }
             return HttpResponse(template.render(context, request))
@@ -82,10 +93,10 @@ class TaskView():
 
     def get_by_id(self, request: HttpRequest, id: str, service: IServiceGetById) -> HttpResponse:
         try:
-            task = service.get_by_id(id, Task())
+            task = service.get_by_id(TASK_MODEL, id)
             template = loader.get_template("tasks/retrieve.html")
             context = {
-                "title": title,
+                "title": self.title,
                 "task": task
             }
             return HttpResponse(template.render(context, request))
@@ -96,21 +107,20 @@ class TaskView():
             print(err)
             raise
     
-    def create(self, request: HttpRequest):
+    def create(self, request: HttpRequest, service: IServiceCreate) -> HttpResponseRedirect:
         try:
-            task = json_decode(request.body)
-            if(TaskService().create(task)):
+            task = self.json_decode(request.body)
+            if(service.create(TASK_MODEL, task)):
                 return HttpResponseRedirect(reverse("tasks:index",))
         except Exception as err:
             print(err)
             raise
-    
-    def update(self, request: HttpRequest, task_id: str):
-        task = json_decode(request.body)
-        task["task_id"] = task_id
-        
+
+    def update(self, request: HttpRequest, service: IServiceUpdate) -> HttpResponseRedirect:
+        task = self.json_decode(request.body)
+
         try:
-            if(TaskService().update(task)):
+            if(service.update(TASK_MODEL, task)):
                 return HttpResponseRedirect(reverse("tasks:retrieve", args=[task["task_id"]]))
         except NotFound as err404:
             print(err404)
@@ -119,9 +129,11 @@ class TaskView():
             print(err)
             raise
     
-    def delete(self, request: HttpRequest, task_id: str):
+    def delete(self, request: HttpRequest, service: IServiceDelete) -> HttpResponseRedirect:
+        task = self.json_decode(request.body)
+    
         try:
-            if(TaskService().delete(task_id)):
+            if(service.delete(TASK_MODEL, task["task_id"])):
                 return HttpResponseRedirect(reverse("tasks:index",))
         except NotFound as err404:
             print(err404)

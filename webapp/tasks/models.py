@@ -63,7 +63,7 @@ class Task(models.Model):
         Retrieves all Tasks.
         """
     
-        tasks: List[Dict[str, Any]] = list(Task.objects.all().values())
+        tasks: List[Dict[str, Any]] = list(self.__class__.objects.all().values())
     
         return tasks
 
@@ -72,7 +72,7 @@ class Task(models.Model):
         Retrieves items as a list of dictionaries, filtered by keyword arguments.
         """
 
-        tasks: List[Dict[str, Any]] = list(Task.objects.filter(
+        tasks: List[Dict[str, Any]] = list(self.__class__.objects.filter(
             Q(name__icontains=params) |
             Q(gender__icontains=params) |
             Q(age__icontains=params)
@@ -80,7 +80,7 @@ class Task(models.Model):
 
         return tasks
 
-    def custom_get_by_id(self, id: Any) -> Dict[str, Any]:
+    def custom_get_by_id(self, id: str) -> Dict[str, Any]:
         """
         Retrieves a single Task by its primary key.
         """
@@ -103,7 +103,7 @@ class Task(models.Model):
         except Task.DoesNotExist as err:
             raise NotFound(err)
 
-    def custom_create(self) -> bool:
+    def custom_create(self, data: Dict[str, Any]) -> bool:
         """
         Creates a new Task instance.
         """
@@ -111,7 +111,13 @@ class Task(models.Model):
 
         try:
             with transaction.atomic():
-                if not Task.objects.filter(task_id=self.task_id).exists():
+                if not data["task_id"]:
+                    self.title = data['title']
+                    self.description = data['description']
+                    self.start_time = data['start_time']
+                    self.end_time = data['end_time']
+                    self.priority = data['priority']
+                    self.status = data['status']
                     self._state.adding = True
                     self.save()
                     created = True
@@ -120,7 +126,7 @@ class Task(models.Model):
         
         return created
 
-    def custom_update(self) -> bool:
+    def custom_update(self, data: Dict[str, Any]) -> bool:
         """
         Updates a Task by using a transaction
         """
@@ -129,7 +135,14 @@ class Task(models.Model):
 
         try:
             with transaction.atomic():
-                if(Task.objects.get(pk=self.task_id)):
+                if(self.__class__.objects.get(pk=data['task_id'])):
+                    self.task_id = data['task_id']
+                    self.title = data['title']
+                    self.description = data['description']
+                    self.start_time = data['start_time']
+                    self.end_time = data['end_time']
+                    self.priority = data['priority']
+                    self.status = data['status']
                     self._state.adding = False
                     self.save()
                     updated = True
@@ -138,7 +151,7 @@ class Task(models.Model):
 
         return updated
     
-    def custom_delete(self) -> bool:
+    def custom_delete(self, id: str) -> bool:
         """
         Deletes a Task by using a transaction
         """
@@ -147,7 +160,8 @@ class Task(models.Model):
 
         try:
             with transaction.atomic():
-                if(Task.objects.get(pk=self.task_id)):
+                if(self.__class__.objects.get(pk=id)):
+                    self.task_id = id
                     self._state.adding = False
                     self.delete()
                     deleted = True

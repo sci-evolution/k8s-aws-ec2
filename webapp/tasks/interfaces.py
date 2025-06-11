@@ -34,7 +34,7 @@ class IModelCustomGetById(Protocol):
     """
     Protocol for models that support retrieving a single item by its ID.
     """
-    def custom_get_by_id(self: Any, id: Any) -> Dict[str, Any]:
+    def custom_get_by_id(self: Any, id: str) -> Dict[str, Any]:
         """
         Retrieves a single item by its id.
         Returns the item instance, or None if not found.
@@ -45,7 +45,7 @@ class IModelCustomCreate(Protocol):
     """
     Protocol for models that support creating a new item.
     """
-    def custom_create(self: Any) -> bool:
+    def custom_create(self: Any, data: Dict[str, Any]) -> bool:
         """
         Creates a new item with the given data.
         Returns True if successful, False otherwise.
@@ -56,7 +56,7 @@ class IModelCustomUpdate(Protocol):
     """
     Protocol for models that support updating an existing item.
     """
-    def custom_update(self: Any) -> bool:
+    def custom_update(self: Any, data: Dict[str, Any]) -> bool:
         """
         Updates the item with the given data.
         Returns True if successful, False otherwise.
@@ -67,7 +67,7 @@ class IModelCustomDelete(Protocol):
     """
     Protocol for models that support deleting an item.
     """
-    def custom_delete(self: Any) -> bool:
+    def custom_delete(self: Any, id: str) -> bool:
         """
         Deletes the item.
         Returns True if successful, False otherwise.
@@ -89,34 +89,34 @@ class IServiceGetByParams(ABC):
     """ To get items by given params """
 
     @abstractmethod
-    def get_by_params(self: Any, param: str, model: IModelCustomGetByParams) -> List[Dict[str, Any]]:
+    def get_by_params(self: Any, model: IModelCustomGetByParams, param: str) -> List[Dict[str, Any]]:
         pass
 
 class IServiceGetById(ABC):
     """ To get an item by its id """
     @abstractmethod
-    def get_by_id(self: Any, id: str, model: IModelCustomGetById) -> Dict[str, Any]:
+    def get_by_id(self: Any, model: IModelCustomGetById, id: str) -> Dict[str, Any]:
         pass
 
 class IServiceCreate(ABC):
     """ To create a new item """
 
     @abstractmethod
-    def create(self: Any, model: IModelCustomCreate) -> bool:
+    def create(self: Any, model: IModelCustomCreate, data: Dict[str, Any]) -> bool:
         pass
 
 class IServiceUpdate(ABC):
     """ To update an item """
 
     @abstractmethod
-    def update(self: Any, model: IModelCustomUpdate) -> bool:
+    def update(self: Any, model: IModelCustomUpdate, data: Dict[str, Any]) -> bool:
         pass
 
 class IServiceDelete(ABC):
     """ To delete an items """
 
     @abstractmethod
-    def delete(self: Any, model: IModelCustomDelete) -> bool:
+    def delete(self: Any, model: IModelCustomDelete, id: str) -> bool:
         pass
 
 
@@ -127,42 +127,42 @@ class IViewGetAll(ABC):
     """ To get all items """
 
     @abstractmethod
-    def get_all(self: Any, request:HttpRequest, service: IServiceGetAll) -> HttpResponse:
+    def get_all(self: Any, request: HttpRequest, service: IServiceGetAll) -> HttpResponse:
         pass
 
 class IViewGetByParams(ABC):
     """ To get items by given params """
     
     @abstractmethod
-    def get_by_params(self: Any, request:HttpRequest, service: IServiceGetByParams) -> HttpResponse:
+    def get_by_params(self: Any, request: HttpRequest, service: IServiceGetByParams) -> HttpResponse:
         pass
 
 class IViewGetById(ABC):
     """ To get an item by its id """
     
     @abstractmethod
-    def get_by_id(self: Any, request:HttpRequest, id: str, service: IServiceGetById) -> HttpResponse:
+    def get_by_id(self: Any, request: HttpRequest, id: str, service: IServiceGetById) -> HttpResponse:
         pass
 
 class IViewCreate(ABC):
     """ To create a new item """
     
     @abstractmethod
-    def create(self: Any, request:HttpRequest, service: IServiceCreate) -> HttpResponseRedirect:
+    def create(self: Any, request: HttpRequest, service: IServiceCreate) -> HttpResponseRedirect:
         pass
 
 class IViewUpdate(ABC):
     """ To update an item """
     
     @abstractmethod
-    def update(self: Any, request:HttpRequest, id: str, service: IServiceUpdate) -> HttpResponseRedirect:
+    def update(self: Any, request: HttpRequest, service: IServiceUpdate) -> HttpResponseRedirect:
         pass
 
 class IViewDelete(ABC):
     """ To delete an items """
-    
+
     @abstractmethod
-    def delete(self: Any, request:HttpRequest, id: str, service: IServiceDelete) -> HttpResponseRedirect:
+    def delete(self: Any, request: HttpRequest, service: IServiceDelete) -> HttpResponseRedirect:
         pass
 
 
