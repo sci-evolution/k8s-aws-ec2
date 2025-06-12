@@ -2,5 +2,9 @@ class NotFound(Exception):
     """
     Custom exception to handle DoesNotExist exceptions
     """
+    def __init__(self, message: str):
+        super().__init__(message)
+        self.message = message
 
-    pass
+    def __str__(self):
+        return f"NotFound: {self.message}"

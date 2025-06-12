@@ -46,8 +46,10 @@ class TaskView(
         To convert a json into a dict
         """
         task: Dict[str, Any] = json.loads(json_src)
-        task["start_time"] = self.isotodatetime(task['start_time']) if task['start_time'] else None
-        task["end_time"] = self.isotodatetime(task['end_time']) if task['end_time'] else None
+        if task.get('start_time'):
+            task["start_time"] = self.isotodatetime(task['start_time'])
+        if task.get('end_time'):
+            task["end_time"] = self.isotodatetime(task['end_time'])
         return task
 
     def new_task(self, request: HttpRequest):

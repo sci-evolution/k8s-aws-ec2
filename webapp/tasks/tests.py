@@ -1,7 +1,15 @@
+from uuid import uuid4
 from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Any
 from django.test import TestCase
+from unittest.mock import Mock
+from django.http import Http404, HttpRequest
+
+from .exceptions import NotFound
 from .models import Task
+from .views import TaskView
+from .interfaces import IServiceGetAll, IServiceGetByParams, IServiceGetById, IServiceCreate, IServiceUpdate, IServiceDelete
+
 
 class TaskModelTests(TestCase):
     def setUp(self):
@@ -68,3 +76,123 @@ class TaskModelTests(TestCase):
         deleted = self.task.custom_delete(task_id)
         self.assertTrue(deleted)
         self.assertEqual(Task.objects.count(), 2)
+
+
+class TaskViewTests(TestCase):
+    def setUp(self):
+        self.view = TaskView()
+        self.request = HttpRequest()
+        self.request.method = 'GET'
+
+    def test_get_all(self):
+        id: str = str(uuid4())
+        tasks: List[Dict[str, Any]] = [
+            {
+                'task_id': id,
+                'title': 'Task Y',
+                'start_time': None,
+                'end_time': None,
+                'priority': 'LOW',
+                'status': 'TODO'
+            }
+        ]
+        mock_service = Mock(spec=IServiceGetAll)
+        mock_service.get_all.return_value = tasks
+        response = self.view.get_all(self.request, mock_service)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Task Y', response.content.decode())
+
+    def test_get_by_params_valid(self):
+        id: str = str(uuid4())
+        tasks: List[Dict[str, Any]] = [
+            {
+                'task_id': id,
+                'title': 'Task Y',
+                'start_time': None,
+                'end_time': None,
+                'priority': 'LOW',
+                'status': 'TODO'
+            }
+        ]
+        mock_service = Mock(spec=IServiceGetByParams)
+        mock_service.get_by_params.return_value = tasks
+        self.request.GET['search'] = 'Task Y'
+        response = self.view.get_by_params(self.request, mock_service)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Task Y', response.content.decode())
+
+    def test_get_by_params_invalid(self):
+        mock_service = Mock(spec=IServiceGetByParams)
+        self.request.GET['search'] = '!@#invalid!'
+        response = self.view.get_by_params(self.request, mock_service)
+        self.assertEqual(response.status_code, 400)
+
+    def test_get_by_id(self):
+        id: str = str(uuid4())
+        task: Dict[str, Any] = {
+            'task_id': id,
+            'title': 'Task Y',
+            'start_time': None,
+            'end_time': None,
+            'priority': 'LOW',
+            'status': 'TODO'
+        }
+        mock_service = Mock(spec=IServiceGetById)
+        mock_service.get_by_id.return_value = task
+        response = self.view.get_by_id(self.request, id, mock_service)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Task Y', response.content.decode())
+    
+    def test_get_by_id_not_found(self):
+        mock_service = Mock(spec=IServiceGetById)
+        mock_service.get_by_id.side_effect = NotFound("Task not found")
+        with self.assertRaises(Http404):
+            self.view.get_by_id(self.request, 'non-existent-id', mock_service)
+
+    def test_create_success(self):
+        mock_service = Mock(spec=IServiceCreate)
+        mock_service.create.return_value = True
+        mock_request = Mock(spec=HttpRequest)
+        mock_request.body = b'{"title": "Task Z", "start_time": null, "end_time": null, "priority": "LOW", "status": "TODO"}'
+        response = self.view.create(mock_request, mock_service)
+        self.assertEqual(response.status_code, 302)
+
+    def test_update_success(self):
+        id: str = str(uuid4())
+        body = f"{{\"task_id\": \"{id}\", \"title\": \"Task U\", \"start_time\": null, \"end_time\": null, \"priority\": \"LOW\", \"status\": \"TODO\"}}"
+        mock_service = Mock(spec=IServiceUpdate)
+        mock_service.update.return_value = True
+        mock_request = Mock(spec=HttpRequest)
+        mock_request.body = body.encode('utf-8')
+        response = self.view.update(mock_request, mock_service)
+        self.assertEqual(response.status_code, 302)
+    
+    def test_update_failure(self):
+        id: str = str(uuid4())
+        body = f'{{"task_id": "{id}", "title": "Task U", "start_time": null, "end_time": null, "priority": "LOW", "status": "TODO"}}'
+        mock_service = Mock(spec=IServiceUpdate)
+        mock_service.update.side_effect = NotFound("Task not found")
+        mock_request = Mock(spec=HttpRequest)
+        mock_request.body = body.encode('utf-8')
+        with self.assertRaises(Http404):
+            self.view.update(mock_request, mock_service)
+
+    def test_delete_success(self):
+        id: str = str(uuid4())
+        body = f'{{"task_id": "{id}"}}'
+        mock_service = Mock(spec=IServiceDelete)
+        mock_service.delete.return_value = True
+        mock_request = Mock(spec=HttpRequest)
+        mock_request.body = body.encode('utf-8')
+        response = self.view.delete(mock_request, mock_service)
+        self.assertEqual(response.status_code, 302)
+    
+    def test_delete_failure(self):
+        id: str = str(uuid4())
+        body = f'{{"task_id": "{id}"}}'
+        mock_service = Mock(spec=IServiceDelete)
+        mock_service.delete.side_effect = NotFound("Task not found")
+        mock_request = Mock(spec=HttpRequest)
+        mock_request.body = body.encode('utf-8')
+        with self.assertRaises(Http404):
+            self.view.delete(mock_request, mock_service)

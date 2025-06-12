@@ -6,11 +6,11 @@ from .services import TaskService
 ###########################################################
 
 
-app_name = "users"
+app_name = "tasks"
 urlpatterns = [
-    path("", views.TaskView.get_all, name="index"),
+    path("", views.TaskView.get_all, kwargs={"service": TaskService()}, name="index"),
     path("search/", views.TaskView.get_by_params, kwargs={"service": TaskService()}, name="search"),
-    path("new_task/", views.TaskView.new_task, kwargs={"service": TaskService()}, name="new_task"),
+    path("new_task/", views.TaskView.new_task, name="new_task"),
     path("create/", views.TaskView.create, kwargs={"service": TaskService()}, name="create"),
     path("<uuid:task_id>/", views.TaskView.get_by_id, kwargs={"service": TaskService()}, name="retrieve"),
     path("<uuid:task_id>/update/", views.TaskView.update, kwargs={"service": TaskService()}, name="update"),
