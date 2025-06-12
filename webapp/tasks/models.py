@@ -73,9 +73,9 @@ class Task(models.Model):
         """
 
         tasks: List[Dict[str, Any]] = list(self.__class__.objects.filter(
-            Q(name__icontains=params) |
-            Q(gender__icontains=params) |
-            Q(age__icontains=params)
+            Q(title__icontains=params) |
+            Q(priority__icontains=params) |
+            Q(status__icontains=params)
         ).values())
 
         return tasks
@@ -111,16 +111,15 @@ class Task(models.Model):
 
         try:
             with transaction.atomic():
-                if not data["task_id"]:
-                    self.title = data['title']
-                    self.description = data['description']
-                    self.start_time = data['start_time']
-                    self.end_time = data['end_time']
-                    self.priority = data['priority']
-                    self.status = data['status']
-                    self._state.adding = True
-                    self.save()
-                    created = True
+                self.title = data['title']
+                self.description = data['description']
+                self.start_time = data['start_time'] if data.get('start_time') else None
+                self.end_time = data['end_time'] if data.get('end_time') else None
+                self.priority = data['priority']
+                self.status = data['status']
+                self._state.adding = True
+                self.save()
+                created = True
         except Exception as err:
             raise Exception(f"Error creating Task: {err}")
         
@@ -139,8 +138,8 @@ class Task(models.Model):
                     self.task_id = data['task_id']
                     self.title = data['title']
                     self.description = data['description']
-                    self.start_time = data['start_time']
-                    self.end_time = data['end_time']
+                    self.start_time = data['start_time'] if data.get('start_time') else None
+                    self.end_time = data['end_time'] if data.get('end_time') else None
                     self.priority = data['priority']
                     self.status = data['status']
                     self._state.adding = False
