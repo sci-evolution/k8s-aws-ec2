@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+from typing import Any, Dict, List
 from .interfaces import (
     IModelCustomGetAll,
     IModelCustomGetByParams,
@@ -13,9 +15,35 @@ from .interfaces import (
     IServiceDelete
 )
 
-class TaskService():
+class TaskService(
+    IServiceGetAll,
+    IServiceGetByParams,
+    IServiceGetById,
+    IServiceCreate,
+    IServiceUpdate,
+    IServiceDelete
+):
     """
     It handles task's business rules
     """
 
-    pass
+    def get_all(self, model: IModelCustomGetAll) -> List[Dict[str, Any]]:
+        return model.custom_get_all()
+
+    def get_by_params(self, model: IModelCustomGetByParams, param: str) -> List[Dict[str, Any]]:
+        return model.custom_get_by_params(param)
+
+    def get_by_id(self, model: IModelCustomGetById, id: str) -> Dict[str, Any]:
+        return model.custom_get_by_id(id)
+
+    def create(self, model: IModelCustomCreate, data: Dict[str, Any]) -> bool:
+        return model.custom_create(data)
+
+    def update(self, model: IModelCustomUpdate, data: Dict[str, Any]) -> bool:
+        # Business logic: if status is set to DONE, set end_time to now
+        if data.get('status') == 'DONE':
+            data['end_time'] = datetime.now(timezone.utc)
+        return model.custom_update(data)
+
+    def delete(self, model: IModelCustomDelete, id: str) -> bool:
+        return model.custom_delete(id)

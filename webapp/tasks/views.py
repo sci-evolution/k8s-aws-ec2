@@ -1,5 +1,5 @@
 import re, json
-from datetime import datetime
+from datetime import timezone, datetime
 from typing import Any, Dict
 from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, Http404
 from django.template import loader
@@ -36,9 +36,10 @@ class TaskView(
 
     def isotodatetime(self, iso: str) -> datetime:
         """
-        Converts an ISO 8601 formatted string to a datetime object.
+        Converts a UTC ISO 8601 formatted string (e.g., "YYYY-MM-DDTHH:mm:ss.sssZ")
+        to a timezone-aware UTC datetime object.
         """
-        dt: datetime = datetime.fromisoformat(iso + "Z")
+        dt: datetime = datetime.fromisoformat(iso)
         return dt
     
     def json_decode(self, json_src: str) -> Dict[str, Any]:

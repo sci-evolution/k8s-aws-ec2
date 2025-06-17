@@ -7,6 +7,7 @@ from django.http import Http404, HttpRequest
 
 from .exceptions import NotFound
 from .models import Task
+from .services import TaskService
 from .views import TaskView
 from .interfaces import IServiceGetAll, IServiceGetByParams, IServiceGetById, IServiceCreate, IServiceUpdate, IServiceDelete
 
@@ -28,6 +29,12 @@ class TaskModelTests(TestCase):
             }
             self.task_data.append(data)
             self.task_data[-1]["task_id"] = Task.objects.create(**data).task_id
+
+    def test_datetimetoiso(self):
+        dt = datetime(2025, 6, 17, 12, 34, 56, tzinfo=timezone.utc)
+        iso = self.task.datetimetoiso(dt)
+        self.assertTrue(iso.startswith("2025-06-17T12:34"))
+        self.assertIn("T", iso)
 
     def test_custom_get_all(self):
         tasks = self.task.custom_get_all()
@@ -78,11 +85,99 @@ class TaskModelTests(TestCase):
         self.assertEqual(Task.objects.count(), 2)
 
 
+class TaskServiceTests(TestCase):
+    def setUp(self):
+        self.model = Mock()
+        self.service = TaskService()
+        self.data: List[Dict[str, Any]] = [
+            {
+                'task_id': str(uuid4()),
+                'title': 'Service Task',
+                'start_time': datetime.now(timezone.utc),
+                'end_time': datetime.now(timezone.utc) + timedelta(hours=1),
+                'priority': 'LOW',
+                'status': 'TODO'
+            }
+        ]
+
+    def test_get_all(self):
+        self.model.custom_get_all.return_value = self.data
+        result = self.service.get_all(self.model)
+        self.assertIsInstance(result, list)
+        self.assertEqual(result[0]['title'], self.data[0]['title'])
+
+    def test_get_by_params(self):
+        self.model.custom_get_by_params.return_value = self.data
+        result = self.service.get_by_params(self.model, 'Service')
+        self.assertIsInstance(result, list)
+        self.assertEqual(result[0]['title'], self.data[0]['title'])
+
+    def test_get_by_id(self):
+        self.model.custom_get_by_id.return_value = self.data[0]
+        result = self.service.get_by_id(self.model, self.data[0]['task_id'])
+        self.assertIsInstance(result, dict)
+        self.assertEqual(result['title'], self.data[0]['title'])
+
+    def test_create(self):
+        self.model.custom_create.return_value = True
+        data: Dict[str, Any] = {
+            'title': 'Service Task',
+            'start_time': datetime.now(timezone.utc),
+            'end_time': datetime.now(timezone.utc) + timedelta(hours=1),
+            'priority': 'LOW',
+            'status': 'TODO'
+        }
+        created = self.service.create(self.model, data)
+        self.assertTrue(created)
+        self.model.custom_create.assert_called_once_with(data)
+
+    def test_update(self):
+        self.model.custom_update.return_value = True
+        data: Dict[str, Any] = {
+            'task_id': str(uuid4()),
+            'title': 'Service Task Updated',
+            'start_time': datetime.now(timezone.utc),
+            'end_time': datetime.now(timezone.utc) + timedelta(hours=1),
+            'priority': 'LOW',
+            'status': 'TODO'
+        }
+        updated = self.service.update(self.model, data)
+        self.assertTrue(updated)
+        self.model.custom_update.assert_called_once_with(data)
+
+    def test_delete(self):
+        self.model.custom_delete.return_value = True
+        id: str = str(uuid4())
+        deleted = self.service.delete(self.model, id)
+        self.assertTrue(deleted)
+        self.model.custom_delete.assert_called_once_with(id)
+
+
 class TaskViewTests(TestCase):
     def setUp(self):
         self.view = TaskView()
         self.request = HttpRequest()
         self.request.method = 'GET'
+
+    def test_isotodatetime(self):
+        iso = "2025-06-17T18:30:00.000Z"
+        dt = self.view.isotodatetime(iso)
+        self.assertIsInstance(dt, datetime)
+        self.assertEqual(dt.year, 2025)
+        self.assertEqual(dt.month, 6)
+        self.assertEqual(dt.day, 17)
+        self.assertEqual(dt.hour, 18)
+        self.assertEqual(dt.minute, 30)
+        self.assertEqual(dt.second, 0)
+
+    def test_json_decode(self):
+        json_str = '{"title": "Task Z", "start_time": "2025-06-17T18:30:00.000Z", "end_time": null, "priority": "LOW", "status": "TODO"}'
+        result = self.view.json_decode(json_str)
+        self.assertEqual(result['title'], 'Task Z')
+        self.assertIsInstance(result['start_time'], datetime)
+        self.assertIsNone(result['end_time'])
+        self.assertEqual(result['priority'], 'LOW')
+        self.assertEqual(result['status'], 'TODO')
 
     def test_get_all(self):
         id: str = str(uuid4())
