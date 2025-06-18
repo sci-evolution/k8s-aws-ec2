@@ -40,24 +40,24 @@ class Task(models.Model):
         """
         Returns a string representing a Task object for display purposes.
         """
-        task: Dict[str, Any] = {
-            "task_id": self.task_id,
-            "title": self.title,
-            "description": self.description,
-            "start_time": self.start_time,
-            "end_time": self.end_time,
-            "PRIORITY_CHOICES": self.PRIORITY_CHOICES,
-            "priority": self.priority,
-            "STATUS_CHOICES": self.STATUS_CHOICES,
-            "status": self.status
-        }
-        return str(task)
+        return f"Task(id={self.task_id}, title={self.title})"
 
     def __repr__(self) -> str:
         """
         Return a string representation of the Task instance for debugging.
         """
-        return f"<Task id={self.task_id} title={self.title!r}>"
+        task_dict: Dict[str, Any] = {
+            "task_id": str(self.task_id),
+            "title": self.title,
+            "description": self.description,
+            "start_time": self.start_time.isoformat() if self.start_time else None,
+            "end_time": self.end_time.isoformat() if self.end_time else None,
+            "PRIORITY_CHOICES": self.PRIORITY_CHOICES,
+            "priority": self.priority,
+            "STATUS_CHOICES": self.STATUS_CHOICES,
+            "status": self.status
+        }
+        return str(task_dict)
 
     def datetimetoiso(self, dt: datetime) -> str:
         """

@@ -40,7 +40,7 @@ class TaskService(
         """
         Return a string representation of the TaskService instance.
         """
-        return f"<TaskService()>"
+        return "<TaskService>"
 
     def get_all(self, model: IModelCustomGetAll) -> List[Dict[str, Any]]:
         """

@@ -1,7 +1,7 @@
 import re, json
 from datetime import datetime
 from typing import Any, Dict
-from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, Http404, HttpResponseServerError
+from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, HttpResponseServerError
 from django.template import loader
 from django.urls import reverse
 from .models import Task
@@ -49,7 +49,7 @@ class TaskView(
         """
         Return a string representation of the TaskView instance.
         """
-        return f"<TaskView title={self.title!r}>"
+        return "<TaskView>"
 
     def isotodatetime(self, iso: str) -> datetime:
         """
@@ -132,7 +132,7 @@ class TaskView(
             return HttpResponse(template.render(context, request))
         except NotFound as err404:
             print(err404)
-            raise Http404("User not found!") from err404
+            return HttpResponse("Task not found", status=404)
         except Exception as err:
             print(err)
             return HttpResponseServerError("Internal Server Error")
@@ -159,7 +159,7 @@ class TaskView(
                 return HttpResponseRedirect(reverse("tasks:retrieve", args=[task["task_id"]]))
         except NotFound as err404:
             print(err404)
-            raise Http404("Task not found!") from err404
+            return HttpResponse("Task not found", status=404)
         except Exception as err:
             print(err)
             return HttpResponseServerError("Internal Server Error")
@@ -174,7 +174,7 @@ class TaskView(
                 return HttpResponseRedirect(reverse("tasks:index",))
         except NotFound as err404:
             print(err404)
-            raise Http404("Task not found!") from err404
+            return HttpResponse("Task not found", status=404)
         except Exception as err:
             print(err)
             return HttpResponseServerError("Internal Server Error")

@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Any
 from unittest.mock import Mock
 from django.test import TestCase
-from django.http import Http404, HttpRequest
+from django.http import HttpRequest
 from .interfaces import IServiceGetAll, IServiceGetByParams, IServiceGetById, IServiceCreate, IServiceUpdate, IServiceDelete
 from .exceptions import NotFound
 from .models import Task
@@ -37,6 +37,37 @@ class TaskModelTests(TestCase):
             }
             self.task_data.append(data)
             self.task_data[-1]["task_id"] = Task.objects.create(**data).task_id
+
+    def test_task_str_success(self):
+        """
+        Test the string representation of the Task model.
+
+        Returns
+        -------
+        None
+        """
+        task = Task.objects.first()
+        self.assertEqual(str(task), f"Task(id={task.task_id}, title={task.title})")
+
+    def test_task_repr_success(self):
+        """
+        Test the string representation of the Task model.
+
+        Returns
+        -------
+        None
+        """
+        task = Task.objects.first()
+        self.assertIsInstance(repr(task), str)
+        self.assertIn("task_id", repr(task))
+        self.assertIn("title", repr(task))
+        self.assertIn("description", repr(task))
+        self.assertIn("start_time", repr(task))
+        self.assertIn("end_time", repr(task))
+        self.assertIn("PRIORITY_CHOICES", repr(task))
+        self.assertIn("priority", repr(task))
+        self.assertIn("STATUS_CHOICES", repr(task))
+        self.assertIn("status", repr(task))
 
     def test_datetimetoiso_returns_iso8601_string(self):
         """
@@ -216,6 +247,16 @@ class TaskServiceTests(TestCase):
             }
         ]
 
+    def test_service_repr_success(self):
+        """
+        Test the string representation of the TaskService.
+
+        Returns
+        -------
+        None
+        """
+        self.assertEqual(repr(self.service), "<TaskService>")
+
     def test_service_get_all_returns_all_tasks(self):
         """
         Test retrieving all tasks via the service.
@@ -288,9 +329,9 @@ class TaskServiceTests(TestCase):
             'task_id': str(uuid4()),
             'title': 'Service Task Updated',
             'start_time': datetime.now(timezone.utc),
-            'end_time': datetime.now(timezone.utc) + timedelta(hours=1),
+            'end_time': None,
             'priority': 'LOW',
-            'status': 'TODO'
+            'status': 'DONE' # Set to DONE to trigger end_time update
         }
         updated = self.service.update(self.model, data)
         self.assertTrue(updated)
@@ -326,6 +367,16 @@ class TaskViewTests(TestCase):
         self.view = TaskView()
         self.request = HttpRequest()
         self.request.method = 'GET'
+    
+    def test_view_representation_success(self):
+        """
+        Test the string representation of the TaskView.
+
+        Returns
+        -------
+        None
+        """
+        self.assertEqual(repr(self.view), "<TaskView>")
 
     def test_view_isotodatetime_success_parses_iso_string(self):
         """
@@ -353,13 +404,39 @@ class TaskViewTests(TestCase):
         -------
         None
         """
-        json_str = '{"title": "Task Z", "start_time": "2025-06-17T18:30:00.000Z", "end_time": null, "priority": "LOW", "status": "TODO"}'
+        json_str = '{"title": "Task Z", "start_time": "2025-06-17T18:30:00.000Z", "end_time": "2025-06-18T18:30:00.000Z", "priority": "LOW", "status": "TODO"}'
         result = self.view.json_decode(json_str)
         self.assertEqual(result['title'], 'Task Z')
         self.assertIsInstance(result['start_time'], datetime)
-        self.assertIsNone(result['end_time'])
+        self.assertIsInstance(result['end_time'], datetime)
         self.assertEqual(result['priority'], 'LOW')
         self.assertEqual(result['status'], 'TODO')
+    
+    def test_view_new_task_succes_renders_template(self):
+        """
+        Test rendering the new task template.
+
+        Returns
+        -------
+        None
+        """
+        response = self.view.new_task(self.request)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Tasks', response.content.decode())
+
+    def test_view_new_task_failure_returns_error_500(self):
+        """
+        Test handling any exceptions when rendering the new task template.
+
+        Returns
+        -------
+        None
+        """
+        mock_request = Mock(spec=HttpRequest)
+        mock_request.side_effect = Exception("Unexpected error") # Simulate an error
+        response = self.view.new_task(mock_request)
+        self.assertEqual(response.status_code, 500)
+        self.assertIn("Internal Server Error", response.content.decode())
 
     def test_view_get_all_success_returns_all_tasks(self):
         """

@@ -11,4 +11,4 @@ class NotFound(Exception):
         return f"NotFound: {self.message}"
 
     def __repr__(self):
-        return f"NotFound({self.message!r})"
+        return "<class=NotFound>"
