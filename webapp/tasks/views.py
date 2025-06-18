@@ -1,5 +1,5 @@
 import re, json
-from datetime import timezone, datetime
+from datetime import datetime
 from typing import Any, Dict
 from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, Http404
 from django.template import loader
@@ -22,7 +22,7 @@ from .interfaces import (
 )
 
 
-TASK_MODEL = Task() # Provisory model instance for type hinting and dependency injection
+TASK_MODEL = Task()  # Provisory model instance for type hinting and dependency injection
 
 class TaskView(
     IViewGetAll,
@@ -32,7 +32,23 @@ class TaskView(
     IViewUpdate,
     IViewDelete
 ):
+    """
+    View layer for Task operations. Handles HTTP requests and responses for tasks.
+    Implements:
+        - IViewGetAll
+        - IViewGetByParams
+        - IViewGetById
+        - IViewCreate
+        - IViewUpdate
+        - IViewDelete
+    """
     title: str = "Tasks"
+
+    def __repr__(self) -> str:
+        """
+        Return a string representation of the TaskView instance.
+        """
+        return f"<TaskView title={self.title!r}>"
 
     def isotodatetime(self, iso: str) -> datetime:
         """
@@ -41,10 +57,10 @@ class TaskView(
         """
         dt: datetime = datetime.fromisoformat(iso)
         return dt
-    
+
     def json_decode(self, json_src: str) -> Dict[str, Any]:
         """
-        To convert a json into a dict
+        Convert a JSON string into a dictionary, parsing datetime fields if present.
         """
         task: Dict[str, Any] = json.loads(json_src)
         if task.get('start_time'):
@@ -54,6 +70,9 @@ class TaskView(
         return task
 
     def new_task(self, request: HttpRequest):
+        """
+        Render the page for creating a new task.
+        """
         try:
             template = loader.get_template("tasks/create.html")
             context = { "title" : self.title}
@@ -61,8 +80,11 @@ class TaskView(
         except Exception as err:
             print(err)
             raise
-    
+
     def get_all(self, request: HttpRequest, service: IServiceGetAll) -> HttpResponse:
+        """
+        Retrieve and display all tasks.
+        """
         try:
             tasks = service.get_all(TASK_MODEL)
             template = loader.get_template("tasks/index.html")
@@ -74,15 +96,16 @@ class TaskView(
         except Exception as err:
             print(err)
             raise
-    
+
     def get_by_params(self, request: HttpRequest, service: IServiceGetByParams) -> HttpResponse:
+        """
+        Search for tasks by parameters.
+        """
         try:
             params = request.GET.get("search")
             pattern = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_\-.\s]{1,48}[a-zA-Z0-9]$")
-            
-            if(not pattern.match(params)):
+            if not pattern.match(params):
                 return HttpResponseBadRequest("Invalid search")
-
             tasks = service.get_by_params(TASK_MODEL, params)
             template = loader.get_template("tasks/index.html")
             context = {
@@ -95,6 +118,9 @@ class TaskView(
             raise
 
     def get_by_id(self, request: HttpRequest, id: str, service: IServiceGetById) -> HttpResponse:
+        """
+        Retrieve and display a specific task by its ID.
+        """
         try:
             task = service.get_by_id(TASK_MODEL, id)
             template = loader.get_template("tasks/retrieve.html")
@@ -109,21 +135,26 @@ class TaskView(
         except Exception as err:
             print(err)
             raise
-    
+
     def create(self, request: HttpRequest, service: IServiceCreate) -> HttpResponseRedirect:
+        """
+        Create a new task.
+        """
         try:
             task = self.json_decode(request.body)
-            if(service.create(TASK_MODEL, task)):
+            if service.create(TASK_MODEL, task):
                 return HttpResponseRedirect(reverse("tasks:index",))
         except Exception as err:
             print(err)
             raise
 
     def update(self, request: HttpRequest, service: IServiceUpdate) -> HttpResponseRedirect:
+        """
+        Update an existing task.
+        """
         task = self.json_decode(request.body)
-
         try:
-            if(service.update(TASK_MODEL, task)):
+            if service.update(TASK_MODEL, task):
                 return HttpResponseRedirect(reverse("tasks:retrieve", args=[task["task_id"]]))
         except NotFound as err404:
             print(err404)
@@ -131,12 +162,14 @@ class TaskView(
         except Exception as err:
             print(err)
             raise
-    
+
     def delete(self, request: HttpRequest, service: IServiceDelete) -> HttpResponseRedirect:
+        """
+        Delete a task.
+        """
         task = self.json_decode(request.body)
-    
         try:
-            if(service.delete(TASK_MODEL, task["task_id"])):
+            if service.delete(TASK_MODEL, task["task_id"]):
                 return HttpResponseRedirect(reverse("tasks:index",))
         except NotFound as err404:
             print(err404)
