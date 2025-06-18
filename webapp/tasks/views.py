@@ -1,7 +1,7 @@
 import re, json
 from datetime import datetime
 from typing import Any, Dict
-from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, Http404
+from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, Http404, HttpResponseServerError
 from django.template import loader
 from django.urls import reverse
 from .models import Task
@@ -34,6 +34,7 @@ class TaskView(
 ):
     """
     View layer for Task operations. Handles HTTP requests and responses for tasks.
+
     Implements:
         - IViewGetAll
         - IViewGetByParams
@@ -79,7 +80,7 @@ class TaskView(
             return HttpResponse(template.render(context, request))
         except Exception as err:
             print(err)
-            raise
+            return HttpResponseServerError("Internal Server Error")
 
     def get_all(self, request: HttpRequest, service: IServiceGetAll) -> HttpResponse:
         """
@@ -95,7 +96,7 @@ class TaskView(
             return HttpResponse(template.render(context, request))
         except Exception as err:
             print(err)
-            raise
+            return HttpResponseServerError("Internal Server Error")
 
     def get_by_params(self, request: HttpRequest, service: IServiceGetByParams) -> HttpResponse:
         """
@@ -115,7 +116,7 @@ class TaskView(
             return HttpResponse(template.render(context, request))
         except Exception as err:
             print(err)
-            raise
+            return HttpResponseServerError("Internal Server Error")
 
     def get_by_id(self, request: HttpRequest, id: str, service: IServiceGetById) -> HttpResponse:
         """
@@ -134,7 +135,7 @@ class TaskView(
             raise Http404("User not found!") from err404
         except Exception as err:
             print(err)
-            raise
+            return HttpResponseServerError("Internal Server Error")
 
     def create(self, request: HttpRequest, service: IServiceCreate) -> HttpResponseRedirect:
         """
@@ -146,7 +147,7 @@ class TaskView(
                 return HttpResponseRedirect(reverse("tasks:index",))
         except Exception as err:
             print(err)
-            raise
+            return HttpResponseServerError("Internal Server Error")
 
     def update(self, request: HttpRequest, service: IServiceUpdate) -> HttpResponseRedirect:
         """
@@ -161,7 +162,7 @@ class TaskView(
             raise Http404("Task not found!") from err404
         except Exception as err:
             print(err)
-            raise
+            return HttpResponseServerError("Internal Server Error")
 
     def delete(self, request: HttpRequest, service: IServiceDelete) -> HttpResponseRedirect:
         """
@@ -176,4 +177,4 @@ class TaskView(
             raise Http404("Task not found!") from err404
         except Exception as err:
             print(err)
-            raise
+            return HttpResponseServerError("Internal Server Error")

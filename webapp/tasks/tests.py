@@ -15,10 +15,13 @@ class TaskModelTests(TestCase):
     """
     Unit tests for the Task model and its custom methods.
     """
-
     def setUp(self):
         """
         Set up test data for Task model tests.
+
+        Returns
+        -------
+        None
         """
         self.task = Task()
         self.task_data: List[Dict[str, Any]] = []
@@ -38,6 +41,10 @@ class TaskModelTests(TestCase):
     def test_datetimetoiso_returns_iso8601_string(self):
         """
         Test that datetimetoiso returns a valid ISO 8601 string.
+
+        Returns
+        -------
+        None
         """
         dt = datetime(2025, 6, 17, 12, 34, 56, tzinfo=timezone.utc)
         iso = self.task.datetimetoiso(dt)
@@ -47,6 +54,10 @@ class TaskModelTests(TestCase):
     def test_custom_get_all_returns_all_tasks(self):
         """
         Test retrieving all tasks.
+
+        Returns
+        -------
+        None
         """
         tasks = self.task.custom_get_all()
         self.assertEqual(len(tasks), 3)
@@ -54,6 +65,10 @@ class TaskModelTests(TestCase):
     def test_custom_get_by_params_filters_tasks(self):
         """
         Test retrieving tasks by parameters.
+
+        Returns
+        -------
+        None
         """
         params = 'Test Task 2'
         tasks = self.task.custom_get_by_params(params)
@@ -65,15 +80,35 @@ class TaskModelTests(TestCase):
     def test_custom_get_by_id_returns_task(self):
         """
         Test retrieving a task by its ID.
+
+        Returns
+        -------
+        None
         """
         id = str(self.task_data[1]['task_id'])
         task_dict = self.task.custom_get_by_id(id)
         self.assertEqual(task_dict['title'], self.task_data[1]['title'])
         self.assertEqual(task_dict['priority'], self.task_data[1]['priority'])
 
+    def test_custom_get_by_id_raises_notfound(self):
+        """
+        Test that custom_get_by_id raises NotFound when the task does not exist.
+
+        Returns
+        -------
+        None
+        """
+        invalid_id = str(uuid4())
+        with self.assertRaises(NotFound):
+            self.task.custom_get_by_id(invalid_id)
+
     def test_custom_create_creates_task(self):
         """
         Test creating a new task.
+
+        Returns
+        -------
+        None
         """
         new_task_data = {
             'title': 'New Task',
@@ -87,9 +122,25 @@ class TaskModelTests(TestCase):
         self.assertTrue(created)
         self.assertEqual(Task.objects.count(), 4)
 
+    def test_custom_create_raises_exception(self):
+        """
+        Test that custom_create raises Exception on error (simulate by omitting required fields).
+
+        Returns
+        -------
+        None
+        """
+        bad_data = {'title': 'Bad Task'}  # Missing required fields
+        with self.assertRaises(Exception):
+            self.task.custom_create(bad_data)
+
     def test_custom_update_updates_task(self):
         """
         Test updating an existing task.
+
+        Returns
+        -------
+        None
         """
         updated_data = self.task_data[0].copy()
         updated_data['task_id'] = str(self.task_data[1]['task_id'])
@@ -101,24 +152,56 @@ class TaskModelTests(TestCase):
         self.assertEqual(updated_task.title, 'Updated Task')
         self.assertEqual(updated_task.priority, 'HIGH')
 
+    def test_custom_update_raises_notfound(self):
+        """
+        Test that custom_update raises NotFound when the task does not exist.
+
+        Returns
+        -------
+        None
+        """
+        invalid_data = self.task_data[0].copy()
+        invalid_data['task_id'] = str(uuid4())
+        with self.assertRaises(NotFound):
+            self.task.custom_update(invalid_data)
+
     def test_custom_delete_deletes_task(self):
         """
         Test deleting a task by its ID.
+
+        Returns
+        -------
+        None
         """
         task_id = str(self.task_data[1]['task_id'])
         deleted = self.task.custom_delete(task_id)
         self.assertTrue(deleted)
         self.assertEqual(Task.objects.count(), 2)
 
+    def test_custom_delete_raises_notfound(self):
+        """
+        Test that custom_delete raises NotFound when the task does not exist.
+
+        Returns
+        -------
+        None
+        """
+        invalid_id = str(uuid4())
+        with self.assertRaises(NotFound):
+            self.task.custom_delete(invalid_id)
+
 
 class TaskServiceTests(TestCase):
     """
     Unit tests for the TaskService business logic layer.
     """
-
     def setUp(self):
         """
         Set up mock model and service for TaskService tests.
+
+        Returns
+        -------
+        None
         """
         self.model = Mock()
         self.service = TaskService()
@@ -136,6 +219,10 @@ class TaskServiceTests(TestCase):
     def test_service_get_all_returns_all_tasks(self):
         """
         Test retrieving all tasks via the service.
+
+        Returns
+        -------
+        None
         """
         self.model.custom_get_all.return_value = self.data
         result = self.service.get_all(self.model)
@@ -145,6 +232,10 @@ class TaskServiceTests(TestCase):
     def test_service_get_by_params_filters_tasks(self):
         """
         Test retrieving tasks by params via the service.
+
+        Returns
+        -------
+        None
         """
         self.model.custom_get_by_params.return_value = self.data
         result = self.service.get_by_params(self.model, 'Service')
@@ -154,6 +245,10 @@ class TaskServiceTests(TestCase):
     def test_service_get_by_id_returns_task(self):
         """
         Test retrieving a task by ID via the service.
+
+        Returns
+        -------
+        None
         """
         self.model.custom_get_by_id.return_value = self.data[0]
         result = self.service.get_by_id(self.model, self.data[0]['task_id'])
@@ -163,6 +258,10 @@ class TaskServiceTests(TestCase):
     def test_service_create_creates_task(self):
         """
         Test creating a task via the service.
+
+        Returns
+        -------
+        None
         """
         self.model.custom_create.return_value = True
         data: Dict[str, Any] = {
@@ -179,6 +278,10 @@ class TaskServiceTests(TestCase):
     def test_service_update_updates_task(self):
         """
         Test updating a task via the service.
+
+        Returns
+        -------
+        None
         """
         self.model.custom_update.return_value = True
         data: Dict[str, Any] = {
@@ -196,6 +299,10 @@ class TaskServiceTests(TestCase):
     def test_service_delete_deletes_task(self):
         """
         Test deleting a task via the service.
+
+        Returns
+        -------
+        None
         """
         self.model.custom_delete.return_value = True
         id: str = str(uuid4())
@@ -208,18 +315,25 @@ class TaskViewTests(TestCase):
     """
     Unit tests for the TaskView HTTP layer.
     """
-
     def setUp(self):
         """
         Set up a TaskView instance and a mock request for view tests.
+
+        Returns
+        -------
+        None
         """
         self.view = TaskView()
         self.request = HttpRequest()
         self.request.method = 'GET'
 
-    def test_view_isotodatetime_parses_iso_string(self):
+    def test_view_isotodatetime_success_parses_iso_string(self):
         """
         Test converting ISO 8601 string to datetime.
+
+        Returns
+        -------
+        None
         """
         iso = "2025-06-17T18:30:00.000Z"
         dt = self.view.isotodatetime(iso)
@@ -231,9 +345,13 @@ class TaskViewTests(TestCase):
         self.assertEqual(dt.minute, 30)
         self.assertEqual(dt.second, 0)
 
-    def test_view_json_decode_parses_json(self):
+    def test_view_json_decode_success_parses_json(self):
         """
         Test decoding a JSON string to a dictionary with datetime fields.
+
+        Returns
+        -------
+        None
         """
         json_str = '{"title": "Task Z", "start_time": "2025-06-17T18:30:00.000Z", "end_time": null, "priority": "LOW", "status": "TODO"}'
         result = self.view.json_decode(json_str)
@@ -243,9 +361,13 @@ class TaskViewTests(TestCase):
         self.assertEqual(result['priority'], 'LOW')
         self.assertEqual(result['status'], 'TODO')
 
-    def test_view_get_all_returns_all_tasks(self):
+    def test_view_get_all_success_returns_all_tasks(self):
         """
         Test retrieving all tasks via the view.
+
+        Returns
+        -------
+        None
         """
         id: str = str(uuid4())
         tasks: List[Dict[str, Any]] = [
@@ -264,9 +386,27 @@ class TaskViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('Task Y', response.content.decode())
 
-    def test_view_get_by_params_valid_returns_tasks(self):
+    def test_view_get_all_failure_returns_error_500(self):
+        """
+        Test handling any exceptions when retrieving all tasks via the view.
+
+        Returns
+        -------
+        None
+        """
+        mock_service = Mock(spec=IServiceGetAll)
+        mock_service.get_all.side_effect = Exception("Unexpected error")
+        response = self.view.get_all(self.request, mock_service)
+        self.assertEqual(response.status_code, 500)
+        self.assertIn("Internal Server Error", response.content.decode())
+
+    def test_view_get_by_params_success_returns_tasks(self):
         """
         Test retrieving tasks by valid params via the view.
+
+        Returns
+        -------
+        None
         """
         id: str = str(uuid4())
         tasks: List[Dict[str, Any]] = [
@@ -286,18 +426,42 @@ class TaskViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('Task Y', response.content.decode())
 
-    def test_view_get_by_params_invalid_returns_400(self):
+    def test_view_get_by_params_failure_returns_error_400(self):
         """
         Test retrieving tasks by invalid params via the view.
+
+        Returns
+        -------
+        None
         """
         mock_service = Mock(spec=IServiceGetByParams)
         self.request.GET['search'] = '!@#invalid!'
         response = self.view.get_by_params(self.request, mock_service)
         self.assertEqual(response.status_code, 400)
+        self.assertIn("Invalid search", response.content.decode())
 
-    def test_view_get_by_id_returns_task(self):
+    def test_view_get_by_params_failure_returns_error_500(self):
+        """
+        Test handling any exceptions when retrieving tasks by params via the view.
+
+        Returns
+        -------
+        None
+        """
+        mock_service = Mock(spec=IServiceGetByParams)
+        mock_service.get_by_params.side_effect = Exception("Unexpected error")
+        self.request.GET['search'] = 'Task Y'
+        response = self.view.get_by_params(self.request, mock_service)
+        self.assertEqual(response.status_code, 500)
+        self.assertIn("Internal Server Error", response.content.decode())
+
+    def test_view_get_by_id_success_returns_task(self):
         """
         Test retrieving a task by ID via the view.
+
+        Returns
+        -------
+        None
         """
         id: str = str(uuid4())
         task: Dict[str, Any] = {
@@ -314,18 +478,41 @@ class TaskViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('Task Y', response.content.decode())
 
-    def test_view_get_by_id_not_found_raises_404(self):
+    def test_view_get_by_id_failure_returns_error_404(self):
         """
         Test handling NotFound exception when retrieving by ID via the view.
+
+        Returns
+        -------
+        None
         """
         mock_service = Mock(spec=IServiceGetById)
         mock_service.get_by_id.side_effect = NotFound("Task not found")
-        with self.assertRaises(Http404):
-            self.view.get_by_id(self.request, 'non-existent-id', mock_service)
+        response = self.view.get_by_id(self.request, 'non-existent-id', mock_service)
+        self.assertEqual(response.status_code, 404)
+        self.assertIn("Task not found", response.content.decode())
+
+    def test_view_get_by_id_failure_returns_error_500(self):
+        """
+        Test handling any exceptions when retrieving by ID via the view.
+
+        Returns
+        -------
+        None
+        """
+        mock_service = Mock(spec=IServiceGetById)
+        mock_service.get_by_id.side_effect = Exception("Unexpected error")
+        response = self.view.get_by_id(self.request, 'non-existent-id', mock_service)
+        self.assertEqual(response.status_code, 500)
+        self.assertIn("Internal Server Error", response.content.decode())
 
     def test_view_create_success_redirects(self):
         """
         Test successful creation of a task via the view.
+
+        Returns
+        -------
+        None
         """
         mock_service = Mock(spec=IServiceCreate)
         mock_service.create.return_value = True
@@ -334,9 +521,29 @@ class TaskViewTests(TestCase):
         response = self.view.create(mock_request, mock_service)
         self.assertEqual(response.status_code, 302)
 
+    def test_view_create_failure_returns_error_500(self):
+        """
+        Test handling any exceptions when creating a task via the view.
+
+        Returns
+        -------
+        None
+        """
+        mock_service = Mock(spec=IServiceCreate)
+        mock_service.create.side_effect = Exception("Unexpected error")
+        mock_request = Mock(spec=HttpRequest)
+        mock_request.body = b'{"title": "Task Z", "start_time": null, "end_time": null, "priority": "LOW", "status": "TODO"}'
+        response = self.view.create(mock_request, mock_service)
+        self.assertEqual(response.status_code, 500)
+        self.assertIn("Internal Server Error", response.content.decode())
+
     def test_view_update_success_redirects(self):
         """
         Test successful update of a task via the view.
+
+        Returns
+        -------
+        None
         """
         id: str = str(uuid4())
         body = f"{{\"task_id\": \"{id}\", \"title\": \"Task U\", \"start_time\": null, \"end_time\": null, \"priority\": \"LOW\", \"status\": \"TODO\"}}"
@@ -347,9 +554,13 @@ class TaskViewTests(TestCase):
         response = self.view.update(mock_request, mock_service)
         self.assertEqual(response.status_code, 302)
 
-    def test_view_update_failure_raises_404(self):
+    def test_view_update_failure_returns_error_404(self):
         """
         Test handling NotFound exception when updating via the view.
+
+        Returns
+        -------
+        None
         """
         id: str = str(uuid4())
         body = f'{{"task_id": "{id}", "title": "Task U", "start_time": null, "end_time": null, "priority": "LOW", "status": "TODO"}}'
@@ -357,12 +568,35 @@ class TaskViewTests(TestCase):
         mock_service.update.side_effect = NotFound("Task not found")
         mock_request = Mock(spec=HttpRequest)
         mock_request.body = body.encode('utf-8')
-        with self.assertRaises(Http404):
-            self.view.update(mock_request, mock_service)
+        response = self.view.update(mock_request, mock_service)
+        self.assertEqual(response.status_code, 404)
+        self.assertIn("Task not found", response.content.decode())
+
+    def test_view_update_failure_returns_error_500(self):
+        """
+        Test handling any exceptions when updating a task via the view.
+
+        Returns
+        -------
+        None
+        """
+        id: str = str(uuid4())
+        body = f'{{"task_id": "{id}", "title": "Task U", "start_time": null, "end_time": null, "priority": "LOW", "status": "TODO"}}'
+        mock_service = Mock(spec=IServiceUpdate)
+        mock_service.update.side_effect = Exception("Unexpected error")
+        mock_request = Mock(spec=HttpRequest)
+        mock_request.body = body.encode('utf-8')
+        response = self.view.update(mock_request, mock_service)
+        self.assertEqual(response.status_code, 500)
+        self.assertIn("Internal Server Error", response.content.decode())
 
     def test_view_delete_success_redirects(self):
         """
         Test successful deletion of a task via the view.
+
+        Returns
+        -------
+        None
         """
         id: str = str(uuid4())
         body = f'{{"task_id": "{id}"}}'
@@ -373,9 +607,13 @@ class TaskViewTests(TestCase):
         response = self.view.delete(mock_request, mock_service)
         self.assertEqual(response.status_code, 302)
 
-    def test_view_delete_failure_raises_404(self):
+    def test_view_delete_failure_returns_error_404(self):
         """
         Test handling NotFound exception when deleting via the view.
+
+        Returns
+        -------
+        None
         """
         id: str = str(uuid4())
         body = f'{{"task_id": "{id}"}}'
@@ -383,5 +621,24 @@ class TaskViewTests(TestCase):
         mock_service.delete.side_effect = NotFound("Task not found")
         mock_request = Mock(spec=HttpRequest)
         mock_request.body = body.encode('utf-8')
-        with self.assertRaises(Http404):
-            self.view.delete(mock_request, mock_service)
+        response = self.view.delete(mock_request, mock_service)
+        self.assertEqual(response.status_code, 404)
+        self.assertIn("Task not found", response.content.decode())
+
+    def test_view_delete_failure_returns_error_500(self):
+        """
+        Test handling any exceptions when deleting a task via the view.
+
+        Returns
+        -------
+        None
+        """
+        id: str = str(uuid4())
+        body = f'{{"task_id": "{id}"}}'
+        mock_service = Mock(spec=IServiceDelete)
+        mock_service.delete.side_effect = Exception("Unexpected error")
+        mock_request = Mock(spec=HttpRequest)
+        mock_request.body = body.encode('utf-8')
+        response = self.view.delete(mock_request, mock_service)
+        self.assertEqual(response.status_code, 500)
+        self.assertIn("Internal Server Error", response.content.decode())
