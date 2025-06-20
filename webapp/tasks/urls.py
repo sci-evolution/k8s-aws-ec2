@@ -1,5 +1,5 @@
-from django.urls import path
-from . import views
+from django.urls import path, re_path
+from .views import GetAllTasksView, NewTaskView, SearchTaskView, TaskView
 
 ###   Manual DI   #########################################
 from .services import TaskService
@@ -8,11 +8,11 @@ from .services import TaskService
 
 app_name = "tasks"
 urlpatterns = [
-    path("", views.TaskView.get_all, kwargs={"service": TaskService()}, name="index"),
-    path("search/", views.TaskView.get_by_params, kwargs={"service": TaskService()}, name="search"),
-    path("new_task/", views.TaskView.new_task, name="new_task"),
-    path("create/", views.TaskView.create, kwargs={"service": TaskService()}, name="create"),
-    path("<uuid:task_id>/", views.TaskView.get_by_id, kwargs={"service": TaskService()}, name="retrieve"),
-    path("<uuid:task_id>/update/", views.TaskView.update, kwargs={"service": TaskService()}, name="update"),
-    path("<uuid:task_id>/delete/", views.TaskView.delete, kwargs={"service": TaskService()}, name="delete")
+    path("new_task/", NewTaskView.as_view(), name="new_task"),
+    path("", GetAllTasksView.as_view(), kwargs={"service": TaskService()}, name="index"),
+    path("", SearchTaskView.as_view(), kwargs={"service": TaskService()}, name="search"),
+    path("", TaskView.as_view(), kwargs={"service": TaskService()}, name="create"),
+    path("<uuid:task_id>", TaskView.as_view(), kwargs={"service": TaskService()}, name="retrieve"),
+    path("<uuid:task_id>", TaskView.as_view(), kwargs={"service": TaskService()}, name="update"),
+    path("<uuid:task_id>", TaskView.as_view(), kwargs={"service": TaskService()}, name="delete")
 ]

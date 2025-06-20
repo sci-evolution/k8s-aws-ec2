@@ -2,13 +2,14 @@ from uuid import uuid4
 from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Any
 from unittest.mock import Mock
-from django.test import TestCase
+from django.test import TestCase, Client
 from django.http import HttpRequest
+from django.urls import reverse
 from .interfaces import IServiceGetAll, IServiceGetByParams, IServiceGetById, IServiceCreate, IServiceUpdate, IServiceDelete
 from .exceptions import NotFound
 from .models import Task
 from .services import TaskService
-from .views import TaskView
+from .views import NewTaskView, SearchTaskView, TaskView
 
 
 class TaskModelTests(TestCase):
@@ -365,8 +366,6 @@ class TaskViewTests(TestCase):
         None
         """
         self.view = TaskView()
-        self.request = HttpRequest()
-        self.request.method = 'GET'
     
     def test_view_representation_success(self):
         """
@@ -411,126 +410,6 @@ class TaskViewTests(TestCase):
         self.assertIsInstance(result['end_time'], datetime)
         self.assertEqual(result['priority'], 'LOW')
         self.assertEqual(result['status'], 'TODO')
-    
-    def test_view_new_task_succes_renders_template(self):
-        """
-        Test rendering the new task template.
-
-        Returns
-        -------
-        None
-        """
-        response = self.view.new_task(self.request)
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('Tasks', response.content.decode())
-
-    def test_view_new_task_failure_returns_error_500(self):
-        """
-        Test handling any exceptions when rendering the new task template.
-
-        Returns
-        -------
-        None
-        """
-        mock_request = Mock(spec=HttpRequest)
-        mock_request.side_effect = Exception("Unexpected error") # Simulate an error
-        response = self.view.new_task(mock_request)
-        self.assertEqual(response.status_code, 500)
-        self.assertIn("Internal Server Error", response.content.decode())
-
-    def test_view_get_all_success_returns_all_tasks(self):
-        """
-        Test retrieving all tasks via the view.
-
-        Returns
-        -------
-        None
-        """
-        id: str = str(uuid4())
-        tasks: List[Dict[str, Any]] = [
-            {
-                'task_id': id,
-                'title': 'Task Y',
-                'start_time': None,
-                'end_time': None,
-                'priority': 'LOW',
-                'status': 'TODO'
-            }
-        ]
-        mock_service = Mock(spec=IServiceGetAll)
-        mock_service.get_all.return_value = tasks
-        response = self.view.get_all(self.request, mock_service)
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('Task Y', response.content.decode())
-
-    def test_view_get_all_failure_returns_error_500(self):
-        """
-        Test handling any exceptions when retrieving all tasks via the view.
-
-        Returns
-        -------
-        None
-        """
-        mock_service = Mock(spec=IServiceGetAll)
-        mock_service.get_all.side_effect = Exception("Unexpected error")
-        response = self.view.get_all(self.request, mock_service)
-        self.assertEqual(response.status_code, 500)
-        self.assertIn("Internal Server Error", response.content.decode())
-
-    def test_view_get_by_params_success_returns_tasks(self):
-        """
-        Test retrieving tasks by valid params via the view.
-
-        Returns
-        -------
-        None
-        """
-        id: str = str(uuid4())
-        tasks: List[Dict[str, Any]] = [
-            {
-                'task_id': id,
-                'title': 'Task Y',
-                'start_time': None,
-                'end_time': None,
-                'priority': 'LOW',
-                'status': 'TODO'
-            }
-        ]
-        mock_service = Mock(spec=IServiceGetByParams)
-        mock_service.get_by_params.return_value = tasks
-        self.request.GET['search'] = 'Task Y'
-        response = self.view.get_by_params(self.request, mock_service)
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('Task Y', response.content.decode())
-
-    def test_view_get_by_params_failure_returns_error_400(self):
-        """
-        Test retrieving tasks by invalid params via the view.
-
-        Returns
-        -------
-        None
-        """
-        mock_service = Mock(spec=IServiceGetByParams)
-        self.request.GET['search'] = '!@#invalid!'
-        response = self.view.get_by_params(self.request, mock_service)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn("Invalid search", response.content.decode())
-
-    def test_view_get_by_params_failure_returns_error_500(self):
-        """
-        Test handling any exceptions when retrieving tasks by params via the view.
-
-        Returns
-        -------
-        None
-        """
-        mock_service = Mock(spec=IServiceGetByParams)
-        mock_service.get_by_params.side_effect = Exception("Unexpected error")
-        self.request.GET['search'] = 'Task Y'
-        response = self.view.get_by_params(self.request, mock_service)
-        self.assertEqual(response.status_code, 500)
-        self.assertIn("Internal Server Error", response.content.decode())
 
     def test_view_get_by_id_success_returns_task(self):
         """
@@ -549,9 +428,11 @@ class TaskViewTests(TestCase):
             'priority': 'LOW',
             'status': 'TODO'
         }
+        request: HttpRequest = HttpRequest()
+        request.method = 'GET'
         mock_service = Mock(spec=IServiceGetById)
         mock_service.get_by_id.return_value = task
-        response = self.view.get_by_id(self.request, id, mock_service)
+        response = self.view.get(request, id, mock_service)
         self.assertEqual(response.status_code, 200)
         self.assertIn('Task Y', response.content.decode())
 
@@ -563,9 +444,11 @@ class TaskViewTests(TestCase):
         -------
         None
         """
+        request: HttpRequest = HttpRequest()
+        request.method = 'GET'
         mock_service = Mock(spec=IServiceGetById)
         mock_service.get_by_id.side_effect = NotFound("Task not found")
-        response = self.view.get_by_id(self.request, 'non-existent-id', mock_service)
+        response = self.view.get(request, 'non-existent-id', mock_service)
         self.assertEqual(response.status_code, 404)
         self.assertIn("Task not found", response.content.decode())
 
@@ -577,9 +460,11 @@ class TaskViewTests(TestCase):
         -------
         None
         """
+        request: HttpRequest = HttpRequest()
+        request.method = 'GET'
         mock_service = Mock(spec=IServiceGetById)
         mock_service.get_by_id.side_effect = Exception("Unexpected error")
-        response = self.view.get_by_id(self.request, 'non-existent-id', mock_service)
+        response = self.view.get(request, 'non-existent-id', mock_service)
         self.assertEqual(response.status_code, 500)
         self.assertIn("Internal Server Error", response.content.decode())
 
@@ -595,7 +480,7 @@ class TaskViewTests(TestCase):
         mock_service.create.return_value = True
         mock_request = Mock(spec=HttpRequest)
         mock_request.body = b'{"title": "Task Z", "start_time": null, "end_time": null, "priority": "LOW", "status": "TODO"}'
-        response = self.view.create(mock_request, mock_service)
+        response = self.view.post(mock_request, mock_service)
         self.assertEqual(response.status_code, 302)
 
     def test_view_create_failure_returns_error_500(self):
@@ -610,7 +495,7 @@ class TaskViewTests(TestCase):
         mock_service.create.side_effect = Exception("Unexpected error")
         mock_request = Mock(spec=HttpRequest)
         mock_request.body = b'{"title": "Task Z", "start_time": null, "end_time": null, "priority": "LOW", "status": "TODO"}'
-        response = self.view.create(mock_request, mock_service)
+        response = self.view.post(mock_request, mock_service)
         self.assertEqual(response.status_code, 500)
         self.assertIn("Internal Server Error", response.content.decode())
 
@@ -628,7 +513,7 @@ class TaskViewTests(TestCase):
         mock_service.update.return_value = True
         mock_request = Mock(spec=HttpRequest)
         mock_request.body = body.encode('utf-8')
-        response = self.view.update(mock_request, mock_service)
+        response = self.view.put(mock_request, mock_service)
         self.assertEqual(response.status_code, 302)
 
     def test_view_update_failure_returns_error_404(self):
@@ -645,7 +530,7 @@ class TaskViewTests(TestCase):
         mock_service.update.side_effect = NotFound("Task not found")
         mock_request = Mock(spec=HttpRequest)
         mock_request.body = body.encode('utf-8')
-        response = self.view.update(mock_request, mock_service)
+        response = self.view.put(mock_request, mock_service)
         self.assertEqual(response.status_code, 404)
         self.assertIn("Task not found", response.content.decode())
 
@@ -663,7 +548,7 @@ class TaskViewTests(TestCase):
         mock_service.update.side_effect = Exception("Unexpected error")
         mock_request = Mock(spec=HttpRequest)
         mock_request.body = body.encode('utf-8')
-        response = self.view.update(mock_request, mock_service)
+        response = self.view.put(mock_request, mock_service)
         self.assertEqual(response.status_code, 500)
         self.assertIn("Internal Server Error", response.content.decode())
 
@@ -719,3 +604,459 @@ class TaskViewTests(TestCase):
         response = self.view.delete(mock_request, mock_service)
         self.assertEqual(response.status_code, 500)
         self.assertIn("Internal Server Error", response.content.decode())
+
+
+class GetAllTasksViewTests(TestCase):
+    """
+    Unit tests for the GetAllTasksView.
+    """
+    def setUp(self):
+        """
+        Set up a GetAllTasksView instance.
+
+        Returns
+        -------
+        None
+        """
+        self.view = GetAllTasksViewTests()
+    
+    def test_view_representation_success(self):
+        """
+        Test the string representation of the GetAllTasksView.
+
+        Returns
+        -------
+        None
+        """
+        self.assertEqual(repr(self.view), "<GetAllTasksView>")
+
+    def test_view_get_all_success_returns_tasks(self):
+        """
+        Test retrieving all tasks by valid params.
+
+        Returns
+        -------
+        None
+        """
+        id: str = str(uuid4())
+        tasks: List[Dict[str, Any]] = [
+            {
+                'task_id': id,
+                'title': 'Get All Tasks',
+                'start_time': None,
+                'end_time': None,
+                'priority': 'LOW',
+                'status': 'TODO'
+            }
+        ]
+        request: HttpRequest = HttpRequest()
+        request.method = 'GET'
+        mock_service = Mock(spec=IServiceGetAll)
+        mock_service.get_all.return_value = tasks
+        response = self.view.get(request, service=mock_service)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Get All Tasks', response.content.decode())
+
+    def test_view_get_all_failure_returns_error_500(self):
+        """
+        Test handling any exceptions when retrieving all tasks.
+
+        Returns
+        -------
+        None
+        """
+        request: HttpRequest = HttpRequest()
+        request.method = 'GET'
+        mock_service = Mock(spec=IServiceGetAll)
+        mock_service.get_all.side_effect = Exception("Unexpected error")
+        response = self.view.get(request, service=mock_service)
+        self.assertEqual(response.status_code, 500)
+        self.assertIn("Internal Server Error", response.content.decode())
+
+
+class SearchTaskViewTests(TestCase):
+    """
+    Unit tests for the SearchTaskView.
+    """
+    def setUp(self):
+        """
+        Set up a SearchTaskView instance.
+
+        Returns
+        -------
+        None
+        """
+        self.view = SearchTaskView()
+    
+    def test_view_representation_success(self):
+        """
+        Test the string representation of the SearchTaskView.
+
+        Returns
+        -------
+        None
+        """
+        self.assertEqual(repr(self.view), "<SearchTaskView>")
+
+    def test_view_search_success_returns_tasks(self):
+        """
+        Test retrieving tasks by valid search params.
+
+        Returns
+        -------
+        None
+        """
+        id: str = str(uuid4())
+        tasks: List[Dict[str, Any]] = [
+            {
+                'task_id': id,
+                'title': 'Search Task',
+                'start_time': None,
+                'end_time': None,
+                'priority': 'LOW',
+                'status': 'TODO'
+            }
+        ]
+        request: HttpRequest = HttpRequest()
+        request.method = 'GET'
+        request.GET['search'] = 'Search Task'
+        mock_service = Mock(spec=IServiceGetByParams)
+        mock_service.get_by_params.return_value = tasks
+        response = self.view.get(request, service=mock_service)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Search Task', response.content.decode())
+
+    def test_view_search_failure_returns_error_400(self):
+        """
+        Test retrieving tasks by invalid search params.
+
+        Returns
+        -------
+        None
+        """
+        request: HttpRequest = HttpRequest()
+        request.method = 'GET'
+        mock_service = Mock(spec=IServiceGetByParams)
+        request.GET['search'] = '!@#invalid!'
+        response = self.view.get(request, service=mock_service)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Invalid search", response.content.decode())
+    
+    def test_view_search_failure_returns_error_500(self):
+        """
+        Test handling any exceptions when retrieving tasks by search params.
+
+        Returns
+        -------
+        None
+        """
+        request: HttpRequest = HttpRequest()
+        request.method = 'GET'
+        mock_service = Mock(spec=IServiceGetByParams)
+        mock_service.get_by_params.side_effect = Exception("Unexpected error")
+        response = self.view.get(request, service=mock_service)
+        self.assertEqual(response.status_code, 500)
+        self.assertIn("Internal Server Error", response.content.decode())
+
+
+class NewTaskViewTests(TestCase):
+    """
+    Unit tests for the NewTaskView.
+    """
+    def setUp(self):
+        """
+        Set up a NewTaskView instance.
+
+        Returns
+        -------
+        None
+        """
+        self.view = NewTaskView()
+    
+    def test_view_representation_success(self):
+        """
+        Test the string representation of the SearchTaskView.
+
+        Returns
+        -------
+        None
+        """
+        self.assertEqual(repr(self.view), "<NewTaskView>")
+
+    def test_view_new_task_template_success(self):
+        """
+        Test retrieving the new task template.
+
+        Returns
+        -------
+        None
+        """
+        request: HttpRequest = HttpRequest()
+        request.method = 'GET'
+        response = self.view.get(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('form_create', response.content.decode())
+
+    def test_view_new_task_template_failure_returns_error_500(self):
+        """
+        Test handling any exceptions when rendering the new task template.
+
+        Returns
+        -------
+        None
+        """
+        mock_request = Mock(spec=HttpRequest)
+        mock_request.side_effect = Exception("Unexpected error")
+        response = self.view.get(mock_request)
+        self.assertEqual(response.status_code, 500)
+        self.assertIn("Internal Server Error", response.content.decode())
+
+
+class TaskAPITests(TestCase):
+    """
+    Integration tests for the Task API endpoints.
+    """
+    def setUp(self):
+        """
+        Set up test data and client for API tests.
+
+        Returns
+        -------
+        None
+        """
+        self.client = Client()
+        self.task1 = Task.objects.create(
+            title='API Task 1',
+            description='First API task',
+            start_time=datetime.now(timezone.utc),
+            end_time=datetime.now(timezone.utc) + timedelta(hours=1),
+            priority='LOW',
+            status='TODO',
+        )
+        self.task2 = Task.objects.create(
+            title='API Task 2',
+            description='Second API task',
+            start_time=datetime.now(timezone.utc),
+            end_time=datetime.now(timezone.utc) + timedelta(hours=2),
+            priority='HIGH',
+            status='DOING',
+        )
+    
+    def test_get_new_task_template(self):
+        """
+        Test retrieving the new_task template via the API.
+
+        Returns
+        -------
+        None
+        """
+        url = reverse('tasks:new_task')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('form_create', response.content.decode())
+
+    def test_get_all_tasks(self):
+        """
+        Test retrieving all tasks via the API.
+
+        Returns
+        -------
+        None
+        """
+        url = reverse('tasks:index')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('API Task 1', response.content.decode())
+        self.assertIn('API Task 2', response.content.decode())
+
+    def test_search_tasks_valid(self):
+        """
+        Test searching for tasks with valid parameters via the API.
+
+        Returns
+        -------
+        None
+        """
+        url = reverse('tasks:search')
+        response = self.client.get(url, {'search': 'API Task 1'})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('API Task 1', response.content.decode())
+
+    def test_search_tasks_invalid(self):
+        """
+        Test searching for tasks with invalid parameters returns 400.
+
+        Returns
+        -------
+        None
+        """
+        url = reverse('tasks:search')
+        response = self.client.get(url, {'search': '!@#invalid!'})
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Invalid search', response.content.decode())
+
+    def test_get_task_by_id_success(self):
+        """
+        Test retrieving a task by ID via the API.
+
+        Returns
+        -------
+        None
+        """
+        url = reverse('tasks:retrieve', args=[self.task1.task_id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('API Task 1', response.content.decode())
+
+    def test_get_task_by_id_not_found(self):
+        """
+        Test retrieving a non-existent task by ID returns 404.
+
+        Returns
+        -------
+        None
+        """
+        url = reverse('tasks:retrieve', args=[uuid4()])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+        self.assertIn('Task not found', response.content.decode())
+
+    def test_create_task_success(self):
+        """
+        Test creating a new task via the API.
+
+        Returns
+        -------
+        None
+        """
+        url = reverse('tasks:create')
+        data = {
+            'title': 'API Task 3',
+            'description': 'Third API task',
+            'start_time': datetime.now(timezone.utc).isoformat(),
+            'end_time': (datetime.now(timezone.utc) + timedelta(hours=3)).isoformat(),
+            'priority': 'MEDIUM',
+            'status': 'TODO',
+        }
+        response = self.client.post(url, data, content_type='application/json')
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(Task.objects.filter(title='API Task 3').exists())
+
+    def test_create_task_failure(self):
+        """
+        Test creating a new task with missing required fields returns 500.
+
+        Returns
+        -------
+        None
+        """
+        url = reverse('tasks:create')
+        data = {'title': 'Incomplete Task'}
+        response = self.client.post(url, data, content_type='application/json')
+        self.assertEqual(response.status_code, 500)
+        self.assertIn('Internal Server Error', response.content.decode())
+
+    def test_update_task_success(self):
+        """
+        Test updating an existing task via the API.
+
+        Returns
+        -------
+        None
+        """
+        url = reverse('tasks:update', args=[self.task1.task_id])
+        data = {
+            'task_id': str(self.task1.task_id),
+            'title': 'API Task 1 Updated',
+            'description': self.task1.description,
+            'start_time': self.task1.start_time.isoformat(),
+            'end_time': self.task1.end_time.isoformat(),
+            'priority': 'HIGH',
+            'status': 'DONE',
+        }
+        response = self.client.put(url, data, content_type='application/json')
+        self.assertEqual(response.status_code, 302)
+        self.task1.refresh_from_db()
+        self.assertEqual(self.task1.title, 'API Task 1 Updated')
+        self.assertEqual(self.task1.priority, 'HIGH')
+        self.assertEqual(self.task1.status, 'DONE')
+
+    def test_update_task_not_found(self):
+        """
+        Test updating a non-existent task returns 404.
+
+        Returns
+        -------
+        None
+        """
+        url = reverse('tasks:update', args=[uuid4()])
+        data = {
+            'task_id': str(uuid4()),
+            'title': 'Non-existent Task',
+            'description': 'Should not exist',
+            'start_time': datetime.now(timezone.utc).isoformat(),
+            'end_time': (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat(),
+            'priority': 'LOW',
+            'status': 'TODO',
+        }
+        response = self.client.put(url, data, content_type='application/json')
+        self.assertEqual(response.status_code, 404)
+        self.assertIn('Task not found', response.content.decode())
+
+    def test_update_task_failure(self):
+        """
+        Test updating a task with invalid data returns 500.
+
+        Returns
+        -------
+        None
+        """
+        url = reverse('tasks:update', args=[self.task1.task_id])
+        data = {'task_id': str(self.task1.task_id)}  # Missing required fields
+        response = self.client.put(url, data, content_type='application/json')
+        self.assertEqual(response.status_code, 500)
+        self.assertIn('Internal Server Error', response.content.decode())
+
+    def test_delete_task_success(self):
+        """
+        Test deleting a task via the API.
+
+        Returns
+        -------
+        None
+        """
+        url = reverse('tasks:delete', args=[self.task2.task_id])
+        data = {'task_id': str(self.task2.task_id)}
+        response = self.client.delete(url, data, content_type='application/json')
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(Task.objects.filter(task_id=self.task2.task_id).exists())
+
+    def test_delete_task_not_found(self):
+        """
+        Test deleting a non-existent task returns 404.
+
+        Returns
+        -------
+        None
+        """
+        url = reverse('tasks:delete', args=[uuid4()])
+        data = {'task_id': str(uuid4())}
+        response = self.client.delete(url, data, content_type='application/json')
+        self.assertEqual(response.status_code, 404)
+        self.assertIn('Task not found', response.content.decode())
+
+    def test_delete_task_failure(self):
+        """
+        Test deleting a task with invalid data returns 500.
+
+        Returns
+        -------
+        None
+        """
+        url = reverse('tasks:delete', args=[self.task1.task_id])
+        data = {'task_id': str(self.task1.task_id)}
+        # Simulate error by deleting the task first
+        self.task1.delete()
+        response = self.client.delete(url, data, content_type='application/json')
+        self.assertEqual(response.status_code, 500)
+        self.assertIn('Internal Server Error', response.content.decode())

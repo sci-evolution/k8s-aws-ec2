@@ -292,7 +292,7 @@ class IViewGetAll(ABC):
     Interface for view to get all items using a service.
     """
     @abstractmethod
-    def get_all(self: Any, request: HttpRequest, service: IServiceGetAll) -> HttpResponse:
+    def get(self: Any, request: HttpRequest, service: IServiceGetAll) -> HttpResponse:
         """
         Get all items using the provided service.
 
@@ -317,7 +317,7 @@ class IViewGetByParams(ABC):
     Interface for view to get items by given params using a service.
     """
     @abstractmethod
-    def get_by_params(self: Any, request: HttpRequest, service: IServiceGetByParams) -> HttpResponse:
+    def get(self: Any, request: HttpRequest, service: IServiceGetByParams) -> HttpResponse:
         """
         Get items by given params using the provided service.
 
@@ -344,7 +344,7 @@ class IViewGetById(ABC):
     Interface for view to get an item by its id using a service.
     """
     @abstractmethod
-    def get_by_id(self: Any, request: HttpRequest, id: str, service: IServiceGetById) -> HttpResponse:
+    def get(self: Any, request: HttpRequest, id: str, service: IServiceGetById) -> HttpResponse:
         """
         Get an item by its id using the provided service.
 
@@ -373,7 +373,7 @@ class IViewCreate(ABC):
     Interface for view to create a new item using a service.
     """
     @abstractmethod
-    def create(self: Any, request: HttpRequest, service: IServiceCreate) -> HttpResponseRedirect:
+    def post(self: Any, request: HttpRequest, service: IServiceCreate) -> HttpResponseRedirect:
         """
         Create a new item using the provided service.
 
@@ -398,7 +398,7 @@ class IViewUpdate(ABC):
     Interface for view to update an item using a service.
     """
     @abstractmethod
-    def update(self: Any, request: HttpRequest, service: IServiceUpdate) -> HttpResponseRedirect:
+    def put(self: Any, request: HttpRequest, service: IServiceUpdate) -> HttpResponseRedirect:
         """
         Update an item using the provided service.
 
