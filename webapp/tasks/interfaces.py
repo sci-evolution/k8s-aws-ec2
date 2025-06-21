@@ -287,53 +287,26 @@ class IServiceDelete(ABC):
 ###########################################################
 ###   View Interfaces   ###################################
 ###########################################################
-class IViewGetAll(ABC):
+class IViewGetList(ABC):
     """
-    Interface for view to get all items using a service.
+    Interface for view to get items either by search parameters of all items.
     """
     @abstractmethod
-    def get(self: Any, request: HttpRequest, service: IServiceGetAll) -> HttpResponse:
+    def get(self: Any, request: HttpRequest, service: IServiceGetByParams | IServiceGetAll) -> HttpResponse:
         """
-        Get all items using the provided service.
+        Get a list of items using the provided service.
 
         Parameters
         ----------
         request : HttpRequest
             The HTTP request object.
-        service : IServiceGetAll
+        service : IServiceGetByParams | IServiceGetAll
             The service instance.
 
         Returns
         -------
         HttpResponse
-            The HTTP response with all items.
-        HttpResponseServerError
-            If an error occurs.
-        """
-        ...
-
-class IViewGetByParams(ABC):
-    """
-    Interface for view to get items by given params using a service.
-    """
-    @abstractmethod
-    def get(self: Any, request: HttpRequest, service: IServiceGetByParams) -> HttpResponse:
-        """
-        Get items by given params using the provided service.
-
-        Parameters
-        ----------
-        request : HttpRequest
-            The HTTP request object.
-        service : IServiceGetByParams
-            The service instance.
-
-        Returns
-        -------
-        HttpResponse
-            The HTTP response with filtered items.
-        HttpResponseBadRequest
-            If the request is invalid.
+            The HTTP response with the items.
         HttpResponseServerError
             If an error occurs.
         """
@@ -398,7 +371,7 @@ class IViewUpdate(ABC):
     Interface for view to update an item using a service.
     """
     @abstractmethod
-    def put(self: Any, request: HttpRequest, service: IServiceUpdate) -> HttpResponseRedirect:
+    def put(self: Any, request: HttpRequest, id: str, service: IServiceUpdate) -> HttpResponseRedirect:
         """
         Update an item using the provided service.
 
@@ -406,6 +379,8 @@ class IViewUpdate(ABC):
         ----------
         request : HttpRequest
             The HTTP request object.
+        id : str
+            The unique identifier of the item.
         service : IServiceUpdate
             The service instance.
 
@@ -425,7 +400,7 @@ class IViewDelete(ABC):
     Interface for view to delete an item using a service.
     """
     @abstractmethod
-    def delete(self: Any, request: HttpRequest, service: IServiceDelete) -> HttpResponseRedirect:
+    def delete(self: Any, request: HttpRequest, id: str, service: IServiceDelete) -> HttpResponseRedirect:
         """
         Delete an item using the provided service.
 
@@ -433,6 +408,8 @@ class IViewDelete(ABC):
         ----------
         request : HttpRequest
             The HTTP request object.
+        id : str
+            The unique identifier of the item.
         service : IServiceDelete
             The service instance.
 

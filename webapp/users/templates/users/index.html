@@ -6,7 +6,7 @@
   <button type="button" class="btn_add" onclick="window.open('{{new_user}}', '_self')">
     Add user <span class="icon_add">&#x002b</span>
   </button>
-  <form id="form_q" action="{% url 'users:search' %}" method="post">
+  <form id="form_q" action="{% url 'users:index' %}" method="post">
     {% csrf_token %}
     <input
       type="search"
@@ -36,7 +36,7 @@
     <div class="tbody">
       {% for user in users %}
       <div class="tr">
-        <a href="{% url 'users:retrieve' user.user_id %}">
+        <a href="{% url 'users:task-detail' user.user_id %}">
           <span class="td">{{ user.name }}</span>
           <span class="td">{{ user.joined_at|date:'d/m/Y' }}</span>
           <span class="td">{{ user.is_active|yesno }}</span>

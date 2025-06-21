@@ -1,7 +1,7 @@
 <div class="modal_delete">
   <form
     id="form_delete_user"
-    action="{% url 'users:delete' user.user_id %}"
+    action="{% url 'users:task-detail' user.user_id %}"
     onsubmit="onDelete(event)"
   >
     {% csrf_token %}

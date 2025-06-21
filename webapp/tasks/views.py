@@ -14,8 +14,7 @@ from .interfaces import (
     IServiceCreate,
     IServiceUpdate,
     IServiceDelete,
-    IViewGetAll,
-    IViewGetByParams,
+    IViewGetList,
     IViewGetById,
     IViewCreate,
     IViewUpdate,
@@ -35,6 +34,8 @@ class TaskView(
     """
     View layer for Task operations. Handles HTTP requests and responses for tasks.
 
+    Inherits from:
+        - View
     Implements:
         - IViewGetById
         - IViewCreate
@@ -68,6 +69,18 @@ class TaskView(
             task["end_time"] = self.isotodatetime(task['end_time'])
         return task
 
+    def post(self, request: HttpRequest, service: IServiceCreate) -> HttpResponseRedirect:
+        """
+        Create a new task.
+        """
+        try:
+            task = self.json_decode(request.body)
+            if service.create(TASK_MODEL, task):
+                return HttpResponseRedirect(reverse("tasks:index",))
+        except Exception as err:
+            print(err)
+            return HttpResponseServerError("Internal Server Error")
+
     def get(self, request: HttpRequest, id: str, service: IServiceGetById) -> HttpResponse:
         """
         Retrieve and display a specific task by its ID.
@@ -87,26 +100,14 @@ class TaskView(
             print(err)
             return HttpResponseServerError("Internal Server Error")
 
-    def post(self, request: HttpRequest, service: IServiceCreate) -> HttpResponseRedirect:
-        """
-        Create a new task.
-        """
-        try:
-            task = self.json_decode(request.body)
-            if service.create(TASK_MODEL, task):
-                return HttpResponseRedirect(reverse("tasks:index",))
-        except Exception as err:
-            print(err)
-            return HttpResponseServerError("Internal Server Error")
-
-    def put(self, request: HttpRequest, service: IServiceUpdate) -> HttpResponseRedirect:
+    def put(self, request: HttpRequest, id: str, service: IServiceUpdate) -> HttpResponseRedirect:
         """
         Update an existing task.
         """
         task = self.json_decode(request.body)
         try:
             if service.update(TASK_MODEL, task):
-                return HttpResponseRedirect(reverse("tasks:retrieve", args=[task["task_id"]]))
+                return HttpResponseRedirect(reverse("tasks:task-detail", args=[id]))
         except NotFound as err404:
             print(err404)
             return HttpResponse("Task not found", status=404)
@@ -114,13 +115,13 @@ class TaskView(
             print(err)
             return HttpResponseServerError("Internal Server Error")
 
-    def delete(self, request: HttpRequest, service: IServiceDelete) -> HttpResponseRedirect:
+    def delete(self, request: HttpRequest, id: str, service: IServiceDelete) -> HttpResponseRedirect:
         """
         Delete a task.
         """
         task = self.json_decode(request.body)
         try:
-            if service.delete(TASK_MODEL, task["task_id"]):
+            if service.delete(TASK_MODEL, id):
                 return HttpResponseRedirect(reverse("tasks:index",))
         except NotFound as err404:
             print(err404)
@@ -130,55 +131,39 @@ class TaskView(
             return HttpResponseServerError("Internal Server Error")
 
 
-class GetAllTasksView(View, IViewGetAll):
+class GetTasksView(View, IViewGetList):
     """
-    View for retrieving all tasks.
+    View for retrieving a list of tasks.
 
     Inherits from:
         - View
     Implements:
-        - IViewGetAll
+        - IViewGetList
     """
     title: str = "Tasks"
 
-    def get(self, request: HttpRequest, service: IServiceGetAll) -> HttpResponse:
+    def __repr__(self) -> str:
         """
-        Retrieve all tasks.
+        Return a string representation of the GetTasksView instance.
         """
-        try:
-            tasks = service.get_all(TASK_MODEL)
-            template = loader.get_template("tasks/index.html")
-            context = {
-                "title": self.title,
-                "tasks": tasks
-            }
-            return HttpResponse(template.render(context, request))
-        except Exception as err:
-            print(err)
-            return HttpResponseServerError("Internal Server Error")
+        return "<GetTasksView>"
 
-
-class SearchTaskView(View, IViewGetByParams):
-    """
-    View for retrieving tasks by search parameters.
-
-    Inherits from:
-        - View
-    Implements:
-        - IViewGetByParams
-    """
-    title: str = "Tasks"
-
-    def get_by_params(self, request: HttpRequest, service: IServiceGetByParams) -> HttpResponse:
+    def get(self, request: HttpRequest, service: IServiceGetByParams | IServiceGetAll) -> HttpResponse:
         """
-        Retrieve tasks by search parameters.
+        Retrieve tasks either by search parameters or all tasks.
         """
         try:
+            tasks = None
             params = request.GET.get("search")
-            pattern = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_\-.\s]{1,48}[a-zA-Z0-9]$")
-            if not pattern.match(params):
-                return HttpResponseBadRequest("Invalid search")
-            tasks = service.get_by_params(TASK_MODEL, params)
+            if params:
+                pattern = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_\-.\s]{1,48}[a-zA-Z0-9]$")
+                if pattern.match(params) is None:
+                    print(f"Invalid search parameters")
+                    return HttpResponseBadRequest("Invalid search parameters")
+                tasks = service.get_by_params(TASK_MODEL, params)
+            else:
+                tasks = service.get_all(TASK_MODEL)
+            
             template = loader.get_template("tasks/index.html")
             context = {
                 "title": self.title,
@@ -198,6 +183,12 @@ class NewTaskView(View):
         - View
     """
     title: str = "Tasks"
+
+    def __repr__(self) -> str:
+        """
+        Return a string representation of the NewTaskView instance.
+        """
+        return "<NewTaskView>"
 
     def get(self, request: HttpRequest) -> HttpResponse:
         """

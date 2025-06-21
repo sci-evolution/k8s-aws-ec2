@@ -7,7 +7,7 @@
   Add Task <span class="icon_add">&#x002b</span>
 </a>
 <form id="form_q_tasks"
-      action="{% url 'tasks:search' %}"
+      action="{% url 'tasks:index' %}"
       method="post"
       role="search"
 >
@@ -41,7 +41,7 @@
   <div class="tbody">
     {% for task in tasks %}
     <div class="tr">
-      <a href="{% url 'tasks:retrieve' task.task_id %}">
+      <a href="{% url 'tasks:task-detail' task.task_id %}">
         <span class="td">{{ task.title }}</span>
         <span class="td">{{ task.start_time }}</span>
         <span class="td">{{ task.end_time }}</span>

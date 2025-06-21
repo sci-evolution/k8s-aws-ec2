@@ -3,7 +3,7 @@
 
 {% block content %}
 <form id="form_update_task"
-      action="{% url 'tasks:update' task.task_id %}"
+      action="{% url 'tasks:task-detail' task.task_id %}"
       method="post"
 >
   {% csrf_token %}

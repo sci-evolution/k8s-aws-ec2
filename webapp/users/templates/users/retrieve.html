@@ -3,7 +3,7 @@
 {% block content %}
 <form
   id="form_update"
-  action="{% url 'users:update' user.user_id %}"
+  action="{% url 'users:task-detail' user.user_id %}"
   onsubmit="onCreateOrUpdate(event)"
 >
   {% csrf_token %}
