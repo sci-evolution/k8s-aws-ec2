@@ -1,0 +1,13 @@
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #f7f7f7;
+}
+
+main {
+  min-height: 60vh;
+}
+
+header, footer {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+}

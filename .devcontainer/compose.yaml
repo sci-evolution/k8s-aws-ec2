@@ -1,54 +1,54 @@
 services:
-  webapp:
+  backend:
     build:
-      context: ../webapp
+      context: ../backend
       dockerfile: Dockerfile
       target: development
-    image: webapp-django:dev
-    container_name: ${WEBAPP_HOST}
+    image: backend-django:dev
+    container_name: ${BACKEND_HOST}
     restart: unless-stopped
     environment:
-      - DEBUG=${WEBAPP_DEBUG}
-      - SECRET_KEY=${WEBAPP_SECRET_KEY}
-      - ALLOWED_HOSTS=${WEBAPP_ALLOWED_HOSTS}
-      - DB_HOST=${WEBAPP_DB_HOST}
-      - DB_PORT=${WEBAPP_DB_PORT}
-      - DB_NAME=${WEBAPP_DB_NAME}
-      - DB_USER=${WEBAPP_DB_USER}
-      - DB_PASSWORD=${WEBAPP_DB_PASS}
+      - DEBUG=${BACKEND_DEBUG}
+      - SECRET_KEY=${BACKEND_SECRET_KEY}
+      - ALLOWED_HOSTS=${BACKEND_ALLOWED_HOSTS}
+      - DB_HOST=${BACKEND_DB_HOST}
+      - DB_PORT=${BACKEND_DB_PORT}
+      - DB_NAME=${BACKEND_DB_NAME}
+      - DB_USER=${BACKEND_DB_USER}
+      - DB_PASSWORD=${BACKEND_DB_PASS}
     ports:
-      - ${WEBAPP_PORT}:${WEBAPP_PORT}
+      - ${BACKEND_PORT}:${BACKEND_PORT}
     volumes:
-      - ../webapp:/app/:delegated
+      - ../backend:/app/:delegated
     depends_on:
-      webapp-db:
+      backend-db:
         condition: service_healthy
     networks:
-      - webapp-network
+      - backend-network
 
-  webapp-db:
+  backend-db:
     image: postgres:latest
-    container_name: ${WEBAPP_DB_HOST}
+    container_name: ${BACKEND_DB_HOST}
     restart: unless-stopped
     volumes:
-      - webapp-db-data:/var/lib/postgresql/data
+      - backend-db-data:/var/lib/postgresql/data
     environment:
-      POSTGRES_USER: ${WEBAPP_DB_USER}
-      POSTGRES_PASSWORD: ${WEBAPP_DB_PASS}
-      POSTGRES_DB: ${WEBAPP_DB_NAME}
+      POSTGRES_USER: ${BACKEND_DB_USER}
+      POSTGRES_PASSWORD: ${BACKEND_DB_PASS}
+      POSTGRES_DB: ${BACKEND_DB_NAME}
     ports:
-      - ${WEBAPP_DB_PORT}:${WEBAPP_DB_PORT}
+      - ${BACKEND_DB_PORT}:${BACKEND_DB_PORT}
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "${WEBAPP_DB_USER}", "-d", "${WEBAPP_DB_NAME}"]
+      test: ["CMD", "pg_isready", "-U", "${BACKEND_DB_USER}", "-d", "${BACKEND_DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - webapp-network
+      - backend-network
 
 networks:
-  webapp-network:
+  backend-network:
     driver: bridge
 
 volumes:
-  webapp-db-data:
+  backend-db-data:

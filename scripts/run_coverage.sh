@@ -1,14 +1,14 @@
 #!/bin/bash
 # Script to run all tests with coverage and generate reports
 
-export WEBAPP_DEBUG=1
-export WEBAPP_SECRET_KEY="django-insecure-ml3@$n2r2$e0hsx=q!0i5x88$nwcpj(d0t7rqfi4b9@-@))#(!"
-export WEBAPP_ALLOWED_HOSTS="http://localhost:8000"
+export BACKEND_DEBUG=1
+export BACKEND_SECRET_KEY="django-insecure-ml3@$n2r2$e0hsx=q!0i5x88$nwcpj(d0t7rqfi4b9@-@))#(!"
+export BACKEND_ALLOWED_HOSTS="http://localhost:8000"
 
 # Add Django project root to PYTHONPATH for all apps
-export PYTHONPATH=$PYTHONPATH:/workspaces/k8s-aws-ec2/webapp
+export PYTHONPATH=$PYTHONPATH:/workspaces/k8s-aws-ec2/backend
 
-# Step 1: Run pytest with coverage for the webapp, unit, and integration tests
+# Step 1: Run pytest with coverage for the backend, unit, and integration tests
 coverage run -m pytest tests/unit tests/integration
 
 # Step 2: Show coverage report in terminal
