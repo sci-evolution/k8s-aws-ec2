@@ -11,3 +11,4 @@ gunicorn>=21.2.0
 behave==1.2.7.dev6
 behave-django==1.5.0
 coverage==7.9.1
+playwright==1.53.0
