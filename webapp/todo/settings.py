@@ -39,7 +39,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "tasks.apps.TasksConfig",
-    "behave_django",
     # "users.apps.UsersConfig"
 ]
 
