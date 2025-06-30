@@ -60,15 +60,15 @@ class TaskService(
         """
         return model.custom_get_by_id(id)
 
-    def create(self, model: IModelCustomCreate, data: Dict[str, Any]) -> bool:
+    def create(self, model: IModelCustomCreate, data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Create a new task in the model.
         """
         return model.custom_create(data)
 
-    def update(self, model: IModelCustomUpdate, data: Dict[str, Any]) -> bool:
+    def update(self, model: IModelCustomUpdate, data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Update a task in the model. If status is set to DONE, set end_time to now.
+        Update a task in the model. If status is set to DONE, set end_time to the moment of update.
         """
         if data.get('status') == 'DONE':
             data['end_time'] = datetime.now(timezone.utc)

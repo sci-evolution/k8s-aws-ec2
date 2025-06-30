@@ -74,7 +74,7 @@ class IModelCustomCreate(Protocol):
     """
     Protocol for models that support creating a new item.
     """
-    def custom_create(self: Any, data: Dict[str, Any]) -> bool:
+    def custom_create(self: Any, data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Creates a new item with the given data.
 
@@ -85,8 +85,8 @@ class IModelCustomCreate(Protocol):
 
         Returns
         -------
-        bool
-            True if successful, False otherwise.
+        Dict[str, Any]
+            The created item as a dictionary.
 
         Raises
         ------
@@ -99,7 +99,7 @@ class IModelCustomUpdate(Protocol):
     """
     Protocol for models that support updating an existing item.
     """
-    def custom_update(self: Any, data: Dict[str, Any]) -> bool:
+    def custom_update(self: Any, data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Updates the item with the given data.
 
@@ -110,8 +110,8 @@ class IModelCustomUpdate(Protocol):
 
         Returns
         -------
-        bool
-            True if successful, False otherwise.
+        Dict[str, Any]
+            The updated item as a dictionary.
 
         Raises
         ------
@@ -220,7 +220,7 @@ class IServiceCreate(ABC):
     Interface for service to create a new item.
     """
     @abstractmethod
-    def create(self: Any, model: IModelCustomCreate, data: Dict[str, Any]) -> bool:
+    def create(self: Any, model: IModelCustomCreate, data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Create a new item in the model.
 
@@ -233,8 +233,8 @@ class IServiceCreate(ABC):
 
         Returns
         -------
-        bool
-            True if successful, False otherwise.
+        Dict[str, Any]
+            The created item as a dictionary.
         """
         ...
 
@@ -243,7 +243,7 @@ class IServiceUpdate(ABC):
     Interface for service to update an item.
     """
     @abstractmethod
-    def update(self: Any, model: IModelCustomUpdate, data: Dict[str, Any]) -> bool:
+    def update(self: Any, model: IModelCustomUpdate, data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Update an item in the model.
 
@@ -256,8 +256,8 @@ class IServiceUpdate(ABC):
 
         Returns
         -------
-        bool
-            True if successful, False otherwise.
+        Dict[str, Any]
+            The updated item as a dictionary.
         """
         ...
 
@@ -306,9 +306,8 @@ class IViewGetList(ABC):
         Returns
         -------
         HttpResponse
-            The HTTP response with the items.
-        HttpResponseServerError
-            If an error occurs.
+            JSON response with the items and HTTP 200 on success,
+            or JSON error message with appropriate HTTP status (e.g., 404, 500).
         """
         ...
 
@@ -333,11 +332,8 @@ class IViewGetById(ABC):
         Returns
         -------
         HttpResponse
-            The HTTP response with the item.
-        Http404
-            If the item is not found.
-        HttpResponseServerError
-            If an error occurs.
+            JSON response with the item and HTTP 200 on success,
+            or JSON error message with appropriate HTTP status (e.g., 404, 500).
         """
         ...
 
@@ -346,7 +342,7 @@ class IViewCreate(ABC):
     Interface for view to create a new item using a service.
     """
     @abstractmethod
-    def post(self: Any, request: HttpRequest, service: IServiceCreate) -> HttpResponseRedirect:
+    def post(self: Any, request: HttpRequest, service: IServiceCreate) -> HttpResponse:
         """
         Create a new item using the provided service.
 
@@ -359,10 +355,9 @@ class IViewCreate(ABC):
 
         Returns
         -------
-        HttpResponseRedirect
-            Redirect response after creation.
-        HttpResponseServerError
-            If an error occurs.
+        HttpResponse
+            JSON response with the created item and HTTP 201 on success,
+            or JSON error message with appropriate HTTP status (e.g., 404, 500).
         """
         ...
 
@@ -371,7 +366,7 @@ class IViewUpdate(ABC):
     Interface for view to update an item using a service.
     """
     @abstractmethod
-    def put(self: Any, request: HttpRequest, id: str, service: IServiceUpdate) -> HttpResponseRedirect:
+    def put(self: Any, request: HttpRequest, id: str, service: IServiceUpdate) -> HttpResponse:
         """
         Update an item using the provided service.
 
@@ -386,12 +381,9 @@ class IViewUpdate(ABC):
 
         Returns
         -------
-        HttpResponseRedirect
-            Redirect response after update.
-        Http404
-            If the item is not found.
-        HttpResponseServerError
-            If an error occurs.
+        HttpResponse
+            JSON response with the updated item and HTTP 200 on success,
+            or JSON error message with appropriate HTTP status (e.g., 404, 500).
         """
         ...
 
@@ -400,7 +392,7 @@ class IViewDelete(ABC):
     Interface for view to delete an item using a service.
     """
     @abstractmethod
-    def delete(self: Any, request: HttpRequest, id: str, service: IServiceDelete) -> HttpResponseRedirect:
+    def delete(self: Any, request: HttpRequest, id: str, service: IServiceDelete) -> HttpResponse:
         """
         Delete an item using the provided service.
 
@@ -415,12 +407,9 @@ class IViewDelete(ABC):
 
         Returns
         -------
-        HttpResponseRedirect
-            Redirect response after deletion.
-        Http404
-            If the item is not found.
-        HttpResponseServerError
-            If an error occurs.
+        HttpResponse
+            JSON response with success message and HTTP 204 on success,
+            or JSON error message with appropriate HTTP status (e.g., 404, 500).
         """
         ...
 

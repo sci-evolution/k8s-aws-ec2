@@ -1,7 +1,7 @@
 import re, json
 from datetime import datetime
 from typing import Any, Dict
-from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, HttpResponseServerError
+from django.http import HttpRequest, HttpResponse, JsonResponse, HttpResponseBadRequest, HttpResponseRedirect, HttpResponseServerError
 from django.template import loader
 from django.urls import reverse
 from django.views import View
@@ -69,66 +69,68 @@ class TaskView(
             task["end_time"] = self.isotodatetime(task['end_time'])
         return task
 
-    def post(self, request: HttpRequest, service: IServiceCreate) -> HttpResponseRedirect:
+    def post(self, request: HttpRequest, service: IServiceCreate) -> HttpResponse:
         """
-        Create a new task.
+        Create a new task and return as JSON.
         """
         try:
-            task = self.json_decode(request.body)
-            if service.create(TASK_MODEL, task):
-                return HttpResponseRedirect(reverse("tasks:index",))
+            data = self.json_decode(request.body)
+            task = service.create(TASK_MODEL, data)
+            if task:
+                return JsonResponse({"success": True, "data": task}, status=201)
+            return JsonResponse({"success": False, "error": "Task not created"}, status=400)
         except Exception as err:
             print(err)
-            return HttpResponseServerError("Internal Server Error")
+            return JsonResponse({"success": False, "error": "Internal Server Error"}, status=500)
 
     def get(self, request: HttpRequest, id: str, service: IServiceGetById) -> HttpResponse:
         """
-        Retrieve and display a specific task by its ID.
+        Retrieve a specific task by its ID and return as JSON.
         """
         try:
+            _ = request  # Unused parameter, but kept for interface compliance
             task = service.get_by_id(TASK_MODEL, id)
-            template = loader.get_template("tasks/retrieve.html")
-            context = {
-                "title": self.title,
-                "task": task
-            }
-            return HttpResponse(template.render(context, request))
+            return JsonResponse({"success": True, "data": task}, status=200)
         except NotFound as err404:
             print(err404)
-            return HttpResponse("Task not found", status=404)
+            return JsonResponse({"success": False, "error": "Task not found"}, status=404)
         except Exception as err:
             print(err)
-            return HttpResponseServerError("Internal Server Error")
+            return JsonResponse({"success": False, "error": "Internal Server Error"}, status=500)
 
-    def put(self, request: HttpRequest, id: str, service: IServiceUpdate) -> HttpResponseRedirect:
+    def put(self, request: HttpRequest, id: str, service: IServiceUpdate) -> HttpResponse:
         """
-        Update an existing task.
+        Update an existing task and return as JSON.
         """
-        task = self.json_decode(request.body)
         try:
-            if service.update(TASK_MODEL, task):
-                return HttpResponseRedirect(reverse("tasks:task-detail", args=[id]))
+            _ = id  # Unused parameter, but kept for interface compliance
+            data = self.json_decode(request.body)
+            task = service.update(TASK_MODEL, data)
+            if task:
+                return JsonResponse({"success": True, "data": task}, status=200)
+            return JsonResponse({"success": False, "error": "Task not updated"}, status=400)
         except NotFound as err404:
             print(err404)
-            return HttpResponse("Task not found", status=404)
+            return JsonResponse({"success": False, "error": "Task not found"}, status=404)
         except Exception as err:
             print(err)
-            return HttpResponseServerError("Internal Server Error")
+            return JsonResponse({"success": False, "error": "Internal Server Error"}, status=500)
 
-    def delete(self, request: HttpRequest, id: str, service: IServiceDelete) -> HttpResponseRedirect:
+    def delete(self, request: HttpRequest, id: str, service: IServiceDelete) -> HttpResponse:
         """
-        Delete a task.
+        Delete a task and return as JSON.
         """
-        task = self.json_decode(request.body)
         try:
+            _ = request  # Unused parameter, but kept for interface compliance
             if service.delete(TASK_MODEL, id):
-                return HttpResponseRedirect(reverse("tasks:index",))
+                return JsonResponse({"success": True, "message": "Task deleted"}, status=204)
+            return JsonResponse({"success": False, "error": "Task not deleted"}, status=400)
         except NotFound as err404:
             print(err404)
-            return HttpResponse("Task not found", status=404)
+            return JsonResponse({"success": False, "error": "Task not found"}, status=404)
         except Exception as err:
             print(err)
-            return HttpResponseServerError("Internal Server Error")
+            return JsonResponse({"success": False, "error": "Internal Server Error"}, status=500)
 
 
 class GetTasksView(View, IViewGetList):
@@ -150,54 +152,19 @@ class GetTasksView(View, IViewGetList):
 
     def get(self, request: HttpRequest, service: IServiceGetByParams | IServiceGetAll) -> HttpResponse:
         """
-        Retrieve tasks either by search parameters or all tasks.
+        Retrieve tasks either by search parameters or all tasks, return as JSON.
         """
         try:
-            tasks = None
             params = request.GET.get("search")
             if params:
                 pattern = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_\-.\s]{1,48}[a-zA-Z0-9]$")
                 if pattern.match(params) is None:
                     print(f"Invalid search parameters")
-                    return HttpResponseBadRequest("Invalid search parameters")
+                    return JsonResponse({"success": False, "error": "Invalid search parameters"}, status=400)
                 tasks = service.get_by_params(TASK_MODEL, params)
             else:
                 tasks = service.get_all(TASK_MODEL)
-            
-            template = loader.get_template("tasks/index.html")
-            context = {
-                "title": self.title,
-                "tasks": tasks
-            }
-            return HttpResponse(template.render(context, request))
+            return JsonResponse({"success": True, "data": tasks}, status=200)
         except Exception as err:
             print(err)
-            return HttpResponseServerError("Internal Server Error")
-
-
-class NewTaskView(View):
-    """
-    View for rendering a new task page.
-
-    Inherits from:
-        - View
-    """
-    title: str = "Tasks"
-
-    def __repr__(self) -> str:
-        """
-        Return a string representation of the NewTaskView instance.
-        """
-        return "<NewTaskView>"
-
-    def get(self, request: HttpRequest) -> HttpResponse:
-        """
-        Render a new task page.
-        """
-        try:
-            template = loader.get_template(f"tasks/new_task.html")
-            context = { "title" : self.title}
-            return HttpResponse(template.render(context, request))
-        except Exception as err:
-            print(err)
-            return HttpResponseServerError("Internal Server Error")
+            return JsonResponse({"success": False, "error": "Internal Server Error"}, status=500)

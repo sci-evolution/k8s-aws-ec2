@@ -89,63 +89,84 @@ class Task(models.Model):
         Retrieves a single Task by its primary key.
         """
         try:
-            self: Task = Task.objects.get(pk=id)
+            retrieved_task: Task = Task.objects.get(pk=id)
             task: Dict[str, Any] = {
-                "task_id": self.task_id,
-                "title": self.title,
-                "description": self.description,
-                "start_time": self.datetimetoiso(self.start_time) if self.start_time else None,
-                "end_time": self.datetimetoiso(self.end_time) if self.end_time else None,
-                "PRIORITY_CHOICES": self.PRIORITY_CHOICES,
-                "priority": self.priority,
-                "STATUS_CHOICES": self.STATUS_CHOICES,
-                "status": self.status
+                "task_id": retrieved_task.task_id,
+                "title": retrieved_task.title,
+                "description": retrieved_task.description,
+                "start_time": retrieved_task.datetimetoiso(retrieved_task.start_time) if retrieved_task.start_time else None,
+                "end_time": retrieved_task.datetimetoiso(retrieved_task.end_time) if retrieved_task.end_time else None,
+                "PRIORITY_CHOICES": retrieved_task.PRIORITY_CHOICES,
+                "priority": retrieved_task.priority,
+                "STATUS_CHOICES": retrieved_task.STATUS_CHOICES,
+                "status": retrieved_task.status
             }
             return task
         except Task.DoesNotExist as err:
             raise NotFound(err)
 
-    def custom_create(self, data: Dict[str, Any]) -> bool:
+    def custom_create(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Creates a new Task instance from the provided data.
         """
-        created = False
+        new_task: Task = None
+        task: Dict[str, Any] = {}
         try:
             with transaction.atomic():
-                self.title = data['title']
-                self.description = data['description']
-                self.start_time = data['start_time'] if data.get('start_time') else None
-                self.end_time = data['end_time'] if data.get('end_time') else None
-                self.priority = data['priority']
-                self.status = data['status']
-                self._state.adding = True
-                self.save()
-                created = True
+                new_task = Task.objects.create(
+                    title=data['title'],
+                    description=data['description'],
+                    start_time=data['start_time'] if data.get('start_time') else None,
+                    end_time=data['end_time'] if data.get('end_time') else None,
+                    priority=data['priority'],
+                    status=data['status']
+                )
+                task = {
+                    "task_id": new_task.task_id,
+                    "title": new_task.title,
+                    "description": new_task.description,
+                    "start_time": new_task.datetimetoiso(new_task.start_time) if new_task.start_time else None,
+                    "end_time": new_task.datetimetoiso(new_task.end_time) if new_task.end_time else None,
+                    "PRIORITY_CHOICES": new_task.PRIORITY_CHOICES,
+                    "priority": new_task.priority,
+                    "STATUS_CHOICES": new_task.STATUS_CHOICES,
+                    "status": new_task.status
+                }
         except Exception as err:
             raise Exception(f"Error creating Task: {err}")
-        return created
+        return task
 
-    def custom_update(self, data: Dict[str, Any]) -> bool:
+    def custom_update(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Updates a Task instance with the provided data.
         """
-        updated = False
+        updated_task: Task = None
+        task: Dict[str, Any] = {}
         try:
             with transaction.atomic():
-                if self.__class__.objects.get(pk=data['task_id']):
-                    self.task_id = data['task_id']
-                    self.title = data['title']
-                    self.description = data['description']
-                    self.start_time = data['start_time'] if data.get('start_time') else None
-                    self.end_time = data['end_time'] if data.get('end_time') else None
-                    self.priority = data['priority']
-                    self.status = data['status']
-                    self._state.adding = False
-                    self.save()
-                    updated = True
+                if updated_task.__class__.objects.get(pk=data['task_id']):
+                    updated_task.title = data['title']
+                    updated_task.description = data['description']
+                    updated_task.start_time = data['start_time'] if data.get('start_time') else None
+                    updated_task.end_time = data['end_time'] if data.get('end_time') else None
+                    updated_task.priority = data['priority']
+                    updated_task.status = data['status']
+                    updated_task._state.adding = False
+                    updated_task.save()
+                task = {
+                    "task_id": updated_task.task_id,
+                    "title": updated_task.title,
+                    "description": updated_task.description,
+                    "start_time": updated_task.datetimetoiso(updated_task.start_time) if updated_task.start_time else None,
+                    "end_time": updated_task.datetimetoiso(updated_task.end_time) if updated_task.end_time else None,
+                    "PRIORITY_CHOICES": updated_task.PRIORITY_CHOICES,
+                    "priority": updated_task.priority,
+                    "STATUS_CHOICES": updated_task.STATUS_CHOICES,
+                    "status": updated_task.status
+                }
         except Task.DoesNotExist as err:
             raise NotFound(err)
-        return updated
+        return task
 
     def custom_delete(self, id: str) -> bool:
         """
