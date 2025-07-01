@@ -63,10 +63,10 @@ class TaskView(
         Convert a JSON string into a dictionary, parsing datetime fields if present.
         """
         task: Dict[str, Any] = json.loads(json_src)
-        if task.get('start_time'):
-            task["start_time"] = self.isotodatetime(task['start_time'])
-        if task.get('end_time'):
-            task["end_time"] = self.isotodatetime(task['end_time'])
+        if task.get("start_time"):
+            task["start_time"] = self.isotodatetime(task["start_time"])
+        if task.get("end_time"):
+            task["end_time"] = self.isotodatetime(task["end_time"])
         return task
 
     def post(self, request: HttpRequest, service: IServiceCreate) -> HttpResponse:

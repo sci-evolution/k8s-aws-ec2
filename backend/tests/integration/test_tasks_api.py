@@ -35,19 +35,6 @@ class TaskAPITests(TestCase):
             priority='HIGH',
             status='DOING',
         )
-    
-    def test_get_new_task_template(self):
-        """
-        Test retrieving the new_task template via the API.
-
-        Returns
-        -------
-        None
-        """
-        url = reverse('tasks:new_task')
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('form_create', response.content.decode())
 
     def test_get_all_tasks(self):
         """

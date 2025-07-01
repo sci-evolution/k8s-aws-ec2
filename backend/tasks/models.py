@@ -140,11 +140,11 @@ class Task(models.Model):
         """
         Updates a Task instance with the provided data.
         """
-        updated_task: Task = None
+        updated_task: Task = Task(task_id=data['task_id'])
         task: Dict[str, Any] = {}
         try:
             with transaction.atomic():
-                if updated_task.__class__.objects.get(pk=data['task_id']):
+                if Task.objects.get(pk=data['task_id']):
                     updated_task.title = data['title']
                     updated_task.description = data['description']
                     updated_task.start_time = data['start_time'] if data.get('start_time') else None
@@ -153,17 +153,17 @@ class Task(models.Model):
                     updated_task.status = data['status']
                     updated_task._state.adding = False
                     updated_task.save()
-                task = {
-                    "task_id": updated_task.task_id,
-                    "title": updated_task.title,
-                    "description": updated_task.description,
-                    "start_time": updated_task.datetimetoiso(updated_task.start_time) if updated_task.start_time else None,
-                    "end_time": updated_task.datetimetoiso(updated_task.end_time) if updated_task.end_time else None,
-                    "PRIORITY_CHOICES": updated_task.PRIORITY_CHOICES,
-                    "priority": updated_task.priority,
-                    "STATUS_CHOICES": updated_task.STATUS_CHOICES,
-                    "status": updated_task.status
-                }
+                    task = {
+                        "task_id": updated_task.task_id,
+                        "title": updated_task.title,
+                        "description": updated_task.description,
+                        "start_time": updated_task.datetimetoiso(updated_task.start_time) if updated_task.start_time else None,
+                        "end_time": updated_task.datetimetoiso(updated_task.end_time) if updated_task.end_time else None,
+                        "PRIORITY_CHOICES": updated_task.PRIORITY_CHOICES,
+                        "priority": updated_task.priority,
+                        "STATUS_CHOICES": updated_task.STATUS_CHOICES,
+                        "status": updated_task.status
+                    }
         except Task.DoesNotExist as err:
             raise NotFound(err)
         return task
@@ -172,13 +172,13 @@ class Task(models.Model):
         """
         Deletes a Task instance by its primary key.
         """
+        task_to_delete: Task = Task(task_id=id)
         deleted = False
         try:
             with transaction.atomic():
-                if self.__class__.objects.get(pk=id):
-                    self.task_id = id
-                    self._state.adding = False
-                    self.delete()
+                if Task.objects.get(pk=id):
+                    task_to_delete._state.adding = False
+                    task_to_delete.delete()
                     deleted = True
         except Task.DoesNotExist as err:
             raise NotFound(err)

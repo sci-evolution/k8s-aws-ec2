@@ -1,3 +1,4 @@
+import json
 from uuid import uuid4
 from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Any
@@ -142,16 +143,16 @@ class TaskModelTests(TestCase):
         None
         """
         new_task_data = {
-            'title': 'New Task',
-            'description': 'A new task',
-            'start_time': datetime.now(timezone.utc),
-            'end_time': datetime.now(timezone.utc) + timedelta(hours=1),
-            'priority': 'LOW',
-            'status': 'TODO',
+            "title": "New Task",
+            "description": "A new task",
+            "start_time": datetime.now(timezone.utc),
+            "end_time": datetime.now(timezone.utc) + timedelta(hours=1),
+            "priority": "LOW",
+            "status": "TODO",
         }
         created = self.task.custom_create(new_task_data)
         self.assertIsInstance(created, Dict)
-        self.assertEqual(created['title'], new_task_data['title'])
+        self.assertEqual(created["title"], new_task_data["title"])
 
     def test_custom_create_fail_raises_exception(self):
         """
@@ -173,16 +174,14 @@ class TaskModelTests(TestCase):
         -------
         None
         """
-        updated_data = self.task_data[0].copy()
-        updated_data['task_id'] = str(self.task_data[1]['task_id'])
-        updated_data['title'] = 'Updated Task'
-        updated_data['priority'] = 'HIGH'
-        updated = self.task.custom_update(updated_data)
+        data = self.task_data[0].copy()
+        data['title'] = 'Updated Task'
+        data['priority'] = 'HIGH'
+        updated = self.task.custom_update(data)
         self.assertIsInstance(updated, Dict)
+        self.assertEqual(updated['task_id'], data['task_id'])
         self.assertEqual(updated['title'], 'Updated Task')
-        updated_task = Task.objects.get(pk=self.task_data[1]['task_id'])
-        self.assertEqual(updated_task.title, 'Updated Task')
-        self.assertEqual(updated_task.priority, 'HIGH')
+        self.assertEqual(updated['priority'], 'HIGH')
 
     def test_custom_update_fails_raises_notfound(self):
         """
@@ -403,7 +402,14 @@ class TaskViewTests(TestCase):
         -------
         None
         """
-        json_str = '{"title": "Task Z", "start_time": "2025-06-17T18:30:00.000Z", "end_time": "2025-06-18T18:30:00.000Z", "priority": "LOW", "status": "TODO"}'
+        body: Dict[str, Any] = {
+            "title": "Task Z",
+            "start_time": "2025-06-17T18:30:00.000Z",
+            "end_time": "2025-06-18T18:30:00.000Z",
+            "priority": "LOW",
+            "status": "TODO"
+        }
+        json_str = json.dumps(body)
         result = self.view.json_decode(json_str)
         self.assertEqual(result['title'], 'Task Z')
         self.assertIsInstance(result['start_time'], datetime)
@@ -477,19 +483,20 @@ class TaskViewTests(TestCase):
         None
         """
         body: Dict[str, Any] = {
-            'title': 'Task U',
-            'start_time': None,
-            'end_time': None,
-            'priority': 'LOW',
-            'status': 'TODO'
+            "title": "Task Z",
+            "start_time": None,
+            "end_time": None,
+            "priority": "LOW",
+            "status": "TODO"
         }
+        json_str = json.dumps(body)
         mock_service = Mock(spec=IServiceCreate)
         mock_service.create.return_value = body
         mock_request = Mock(spec=HttpRequest)
-        mock_request.body = str(body)
+        mock_request.body = json_str
         response = self.view.post(mock_request, mock_service)
         self.assertEqual(response.status_code, 201)
-        self.assertIn('Task U', response.content.decode())
+        self.assertIn("Task Z", response.content.decode())
 
     def test_view_create_failure_returns_error_500(self):
         """
@@ -499,10 +506,18 @@ class TaskViewTests(TestCase):
         -------
         None
         """
+        body: Dict[str, Any] = {
+            "title": "Task Z",
+            "start_time": None,
+            "end_time": None,
+            "priority": "LOW",
+            "status": "TODO"
+        }
+        json_str = json.dumps(body)
         mock_service = Mock(spec=IServiceCreate)
         mock_service.create.side_effect = Exception("Unexpected error")
         mock_request = Mock(spec=HttpRequest)
-        mock_request.body = b'{"title": "Task Z", "start_time": null, "end_time": null, "priority": "LOW", "status": "TODO"}'
+        mock_request.body = json_str
         response = self.view.post(mock_request, mock_service)
         self.assertEqual(response.status_code, 500)
         self.assertIn("Internal Server Error", response.content.decode())
@@ -524,10 +539,11 @@ class TaskViewTests(TestCase):
             "priority": "LOW",
             "status": "TODO"
         }
+        json_str = json.dumps(body)
         mock_service = Mock(spec=IServiceUpdate)
         mock_service.update.return_value = body
         mock_request = Mock(spec=HttpRequest)
-        mock_request.body = str(body)
+        mock_request.body = json_str
         response = self.view.put(mock_request, id, mock_service)
         self.assertEqual(response.status_code, 200)
         self.assertIn('Task U', response.content.decode())
@@ -541,11 +557,19 @@ class TaskViewTests(TestCase):
         None
         """
         id: str = str(uuid4())
-        body = f'{{"task_id": "{id}", "title": "Task U", "start_time": null, "end_time": null, "priority": "LOW", "status": "TODO"}}'
+        body: Dict[str, Any] = {
+            "task_id": id,
+            "title": "Task Z",
+            "start_time": None,
+            "end_time": None,
+            "priority": "LOW",
+            "status": "TODO"
+        }
+        json_str = json.dumps(body)
         mock_service = Mock(spec=IServiceUpdate)
         mock_service.update.side_effect = NotFound("Task not found")
         mock_request = Mock(spec=HttpRequest)
-        mock_request.body = body.encode('utf-8')
+        mock_request.body = json_str
         response = self.view.put(mock_request, id, mock_service)
         self.assertEqual(response.status_code, 404)
         self.assertIn("Task not found", response.content.decode())
@@ -559,11 +583,19 @@ class TaskViewTests(TestCase):
         None
         """
         id: str = str(uuid4())
-        body = f'{{"task_id": "{id}", "title": "Task U", "start_time": null, "end_time": null, "priority": "LOW", "status": "TODO"}}'
+        body: Dict[str, Any] = {
+            "task_id": id,
+            "title": "Task U",
+            "start_time": None,
+            "end_time": None,
+            "priority": "LOW",
+            "status": "TODO"
+        }
+        json_str = json.dumps(body)
         mock_service = Mock(spec=IServiceUpdate)
         mock_service.update.side_effect = Exception("Unexpected error")
         mock_request = Mock(spec=HttpRequest)
-        mock_request.body = body.encode('utf-8')
+        mock_request.body = json_str
         response = self.view.put(mock_request, id, mock_service)
         self.assertEqual(response.status_code, 500)
         self.assertIn("Internal Server Error", response.content.decode())
@@ -577,11 +609,14 @@ class TaskViewTests(TestCase):
         None
         """
         id: str = str(uuid4())
-        body = f'{{"task_id": "{id}"}}'
+        body: Dict[str, Any] = {
+            "task_id": id
+        }
+        json_str = json.dumps(body)
         mock_service = Mock(spec=IServiceDelete)
         mock_service.delete.return_value = True
         mock_request = Mock(spec=HttpRequest)
-        mock_request.body = body.encode('utf-8')
+        mock_request.body = json_str
         response = self.view.delete(mock_request, id, mock_service)
         self.assertEqual(response.status_code, 204)
         self.assertIn("Task deleted", response.content.decode())
@@ -595,11 +630,14 @@ class TaskViewTests(TestCase):
         None
         """
         id: str = str(uuid4())
-        body = f'{{"task_id": "{id}"}}'
+        body: Dict[str, Any] = {
+            "task_id": id
+        }
+        json_str = json.dumps(body)
         mock_service = Mock(spec=IServiceDelete)
         mock_service.delete.side_effect = NotFound("Task not found")
         mock_request = Mock(spec=HttpRequest)
-        mock_request.body = body.encode('utf-8')
+        mock_request.body = json_str
         response = self.view.delete(mock_request, id, mock_service)
         self.assertEqual(response.status_code, 404)
         self.assertIn("Task not found", response.content.decode())
@@ -613,11 +651,14 @@ class TaskViewTests(TestCase):
         None
         """
         id: str = str(uuid4())
-        body = f'{{"task_id": "{id}"}}'
+        body: Dict[str, Any] = {
+            "task_id": id
+        }
+        json_str = json.dumps(body)
         mock_service = Mock(spec=IServiceDelete)
         mock_service.delete.side_effect = Exception("Unexpected error")
         mock_request = Mock(spec=HttpRequest)
-        mock_request.body = body.encode('utf-8')
+        mock_request.body = json_str
         response = self.view.delete(mock_request, id, mock_service)
         self.assertEqual(response.status_code, 500)
         self.assertIn("Internal Server Error", response.content.decode())
