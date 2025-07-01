@@ -8,8 +8,6 @@ Feature: Task Management
     Given I am on the new task page
     When I fill in "title" with "Buy groceries"
     And I fill in "description" with "Milk, eggs, bread, cheese"
-    And I fill in "start_time" with "2025-07-01T10:00"
-    And I fill in "end_time" with "2025-07-01T11:00"
     And I select "HIGH" from "priority"
     And I select "TODO" from "status"
     And I click the "Create Task" button

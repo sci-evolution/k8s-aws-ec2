@@ -134,7 +134,7 @@ class TaskAPITests(TestCase):
         }
         data = json.dumps(data)
         response = self.client.post(url, data, content_type='application/json')
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 201)
         self.assertTrue(Task.objects.filter(title='API Task 3').exists())
 
     def test_create_task_failure(self):
@@ -172,7 +172,7 @@ class TaskAPITests(TestCase):
         }
         data = json.dumps(data)
         response = self.client.put(url, data, content_type='application/json')
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 200)
         self.task1.refresh_from_db()
         self.assertEqual(self.task1.title, 'API Task 1 Updated')
         self.assertEqual(self.task1.priority, 'HIGH')
@@ -228,7 +228,7 @@ class TaskAPITests(TestCase):
         data = {'task_id': str(self.task2.task_id)}
         data = json.dumps(data)
         response = self.client.delete(url, data, content_type='application/json')
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 204)
         self.assertFalse(Task.objects.filter(task_id=self.task2.task_id).exists())
 
     def test_delete_task_not_found(self):
