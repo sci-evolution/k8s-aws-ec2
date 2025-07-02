@@ -1,10 +1,12 @@
-import type { Task } from '../types/Task';
-import type { ICreateTask, IGetAllTasks, IGetTaskById, IUpdateTask, IDeleteTask } from '../interfaces/TaskInterfaces';
+"use server";
 
-export class TaskService implements ICreateTask, IGetAllTasks, IGetTaskById, IUpdateTask, IDeleteTask {
+import type { Task } from '../types/Task';
+import type { ICreate, IGetAll, IGetById, IUpdate, IDelete, ISearch } from '../interfaces/ServiceInterfaces';
+
+export class TaskService implements ICreate<Task>, IGetAll<Task>, IGetById<Task>, IUpdate<Task>, IDelete, ISearch<Task> {
   private baseUrl = '/api/tasks';
 
-  async createTask(task: Omit<Task, 'task_id'>): Promise<Task> {
+  async create(task: Task): Promise<Task> {
     try {
       const response = await fetch(this.baseUrl, {
         method: 'POST',
@@ -27,7 +29,7 @@ export class TaskService implements ICreateTask, IGetAllTasks, IGetTaskById, IUp
     }
   }
 
-  async getAllTasks(): Promise<Task[]> {
+  async getAll(): Promise<Task[]> {
     try {
       const response = await fetch(this.baseUrl);
       const data = await response.json();
@@ -46,7 +48,7 @@ export class TaskService implements ICreateTask, IGetAllTasks, IGetTaskById, IUp
     }
   }
 
-  async getTaskById(task_id: string): Promise<Task> {
+  async getById(task_id: string): Promise<Task> {
     try {
       const response = await fetch(`${this.baseUrl}/${task_id}`);
       const data = await response.json();
@@ -65,7 +67,7 @@ export class TaskService implements ICreateTask, IGetAllTasks, IGetTaskById, IUp
     }
   }
 
-  async updateTask(task: Task): Promise<Task> {
+  async update(task: Task): Promise<Task> {
     try {
       const response = await fetch(`${this.baseUrl}/${task.task_id}`, {
         method: 'PUT',
@@ -88,7 +90,7 @@ export class TaskService implements ICreateTask, IGetAllTasks, IGetTaskById, IUp
     }
   }
 
-  async deleteTask(task_id: string): Promise<void> {
+  async delete(task_id: string): Promise<void> {
     try {
       const response = await fetch(`${this.baseUrl}/${task_id}`, {
         method: 'DELETE',
@@ -101,6 +103,26 @@ export class TaskService implements ICreateTask, IGetAllTasks, IGetTaskById, IUp
         throw new Error(data.error || 'Failed to delete task');
       }
       // No return value needed for delete
+    } catch (err) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.error(err);
+      }
+      throw new Error((err as Error).message || 'Network error');
+    }
+  }
+
+  async search(query: { q: string }): Promise<Task[]> {
+    try {
+      const url = `${this.baseUrl}?search=${encodeURIComponent(query.q)}`;
+      const response = await fetch(url);
+      const data = await response.json();
+      if (!response.ok) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.error(data.error || 'Failed to search tasks');
+        }
+        throw new Error(data.error || 'Failed to search tasks');
+      }
+      return data.data;
     } catch (err) {
       if (process.env.NODE_ENV !== 'production') {
         console.error(err);
